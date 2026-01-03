@@ -950,9 +950,11 @@ def fetch_water_quality_data(country: str) -> pd.DataFrame:
     records = []
     # Use 5-year rolling window for better performance
     # Historical data from 1999 is available but loaded on demand
+    # IMPORTANT: Only generate data up to current date (not future months)
     current_year = datetime.now().year
-    end_date = datetime(current_year, 12, 31)
+    end_date = datetime.now()  # Only up to today, not end of year
     start_date = datetime(current_year - 5, 1, 1)  # Last 5 years only
+
 
     
     for basin in basins:
@@ -986,8 +988,10 @@ def fetch_water_quality_data(country: str) -> pd.DataFrame:
                     
                     day_of_year = current_date.timetuple().tm_yday
                     seasonal_factor = 1 + 0.15 * np.sin(2 * np.pi * day_of_year / 365)
+                    # Add year-to-year variation (slight trend over years)
+                    year_factor = 1 + 0.02 * (current_date.year - 2020)
                     random_factor = rng.uniform(0.9, 1.1)
-                    value = baseline * seasonal_factor * random_factor
+                    value = baseline * seasonal_factor * year_factor * random_factor
                     value = max(ranges['min'], min(ranges['max'], value))
                     
                     data_source = "CPCB Baseline"
