@@ -52,13 +52,10 @@ indicator_thresholds = {
 
 @st.cache_data
 def read_data():
-    # read csv file and format date for processing
     df = pd.read_csv('lawa-lake-monitoring-data-2004-2023_statetrendtli-results_sep2024.csv')
     
-    # Convert SampleDateTime to datetime
     df['SampleDateTime'] = pd.to_datetime(df['SampleDateTime'])
     
-    # Extract date and month for analysis
     df['Date'] = df['SampleDateTime'].dt.date
     df['Month'] = df['SampleDateTime'].dt.month
     df['Year'] = df['SampleDateTime'].dt.year    
@@ -73,61 +70,44 @@ def determine_risk_level(row):
     int
         Risk level (0: Safe, 1: Moderate, 2: High)
     """
-    # Handle potential None or empty condition
     indicator = row['Indicator']
     condition = indicator_thresholds.get(indicator)
     value = pd.to_numeric(row['Value (Agency)'], errors='coerce')
-    # print(f"finding risk value for row, value is {value}")
     if not condition or value is None:
         return 0
     
     condition_type = condition.get("type", "above")
     moderate_threshold = condition.get("moderate")
     
-    # Handle both 'high_threshold' and 'threshold' keys
     high_threshold = condition.get("high_threshold") or condition.get("threshold")
     
-    # Default risk is safe
     risk_level = 0
     
-    # Risk determination logic for different condition types
     if condition_type == "above":
-        # Prioritize high threshold if present
         if high_threshold is not None and value > high_threshold:
-            risk_level = 2  # High risk
-            # st.write(f"High Risk: Value {value} > High Threshold {high_threshold}")
+            risk_level = 2
         elif moderate_threshold is not None and value > moderate_threshold:
-            risk_level = 1  # Moderate risk
-            # st.write(f"Moderate Risk: Value {value} > Moderate Threshold {moderate_threshold}")
+            risk_level = 1
     
     elif condition_type == "below":
-        # Prioritize high threshold if present
         if high_threshold is not None and value < high_threshold:
-            risk_level = 2  # High risk
-            # st.write(f"High Risk: Value {value} < High Threshold {high_threshold}")
+            risk_level = 2
         elif moderate_threshold is not None and value < moderate_threshold:
-            risk_level = 1  # Moderate risk
-            # st.write(f"Moderate Risk: Value {value} < Moderate Threshold {moderate_threshold}")
+            risk_level = 1
     
     elif condition_type == "outside_range":
-        # Ensure we have a valid range for moderate and high thresholds
         if (isinstance(moderate_threshold, list) and len(moderate_threshold) == 2 and 
             isinstance(high_threshold, list) and len(high_threshold) == 2):
             
             mod_lower, mod_upper = moderate_threshold
             high_lower, high_upper = high_threshold
             
-            # Check for high risk first
             if value < high_lower or value > high_upper:
-                risk_level = 2  # High risk
-                # st.write(f"High Risk: Value {value} outside high threshold range [{high_lower}, {high_upper}]")
+                risk_level = 2
             
-            # Then check for moderate risk
             elif value < mod_lower or value > mod_upper:
-                risk_level = 1  # Moderate risk
-                # st.write(f"Moderate Risk: Value {value} outside moderate threshold range [{mod_lower}, {mod_upper}]")
+                risk_level = 1
     
-    # st.write(f"Determined Risk Level: {risk_level}")
     return risk_level
 
 def get_risk(num):
@@ -141,54 +121,32 @@ def get_risk(num):
 @st.cache_resource
 def build_model_aggregated_dataset(df):
 
-    # Convert categorical features to appropriate format
     df['SiteID'] = df['SiteID'].astype('category')
     df['Month'] = df['Month'].astype('category')
 
 
-    # Check the range of years in your dataset
     min_year = df['Year'].min()
     max_year = df['Year'].max()
     unique_years = sorted(df['Year'].unique())
 
-    # st.write(f"Years in dataset: {unique_years}")
-    # st.write((f"Range: {min_year} to {max_year} ({len(unique_years)} years)")
 
-    # Calculate a good split point (e.g., use the last 20-25% of years for testing)
-    # num_years = len(unique_years)
-    # split_index = int(num_years * 0.8)  # Use 80% of years for training
-    # split_year = unique_years[split_index]
 
-    # print(f"Suggested split: Train on {unique_years[:split_index]} (years before {split_year})")
-    # print(f"                 Test on {unique_years[split_index:]} (years {split_year} and after)")
 
-    # # Create the train/test split
-    # train_data = df[df['Year'] < split_year]
-    # test_data = df[df['Year'] >= split_year]
 
-    # print(f"Training data: {len(train_data)} samples from years {train_data['Year'].min()}-{train_data['Year'].max()}")
-    # print(f"Testing data: {len(test_data)} samples from years {test_data['Year'].min()}-{test_data['Year'].max()}")
 
-    # Alternative approach for imbalanced years: split by percentage of total data
     df_sorted = df.sort_values(['Year', 'Month'])
     train_size = 0.8
     train_data = df_sorted.iloc[:int(len(df_sorted) * train_size)]
     test_data = df_sorted.iloc[int(len(df_sorted) * train_size):]
-    # st.write((f"Alternative - Training data: years {train_data['Year'].min()}-{train_data['Year'].max()}")
-    # st.write((f"Alternative - Testing data: years {test_data['Year'].min()}-{test_data['Year'].max()}")
 
-    # Create feature and target variables for training
-    X_train = train_data.drop('risk_level', axis=1)  # Remove target column
-    y_train = train_data['risk_level']               # Just the target column
+    X_train = train_data.drop('risk_level', axis=1)
+    y_train = train_data['risk_level']
 
-    # Create feature and target variables for testing
     X_test = test_data.drop('risk_level', axis=1)
     y_test = test_data['risk_level']
 
-    # Specify categorical features for CatBoost
-    categorical_features = ['SiteID', 'Month']  # Add any other categorical columns
+    categorical_features = ['SiteID', 'Month']
 
-    # Now train the model
     model = CatBoostClassifier(
         iterations=500,
         learning_rate=0.1,
@@ -196,66 +154,45 @@ def build_model_aggregated_dataset(df):
         random_seed=42
     )
 
-    # Fit the model
     model.fit(
         X_train, y_train,
         eval_set=(X_test, y_test),
         verbose=100
     )
 
-    # Evaluate performance
     from sklearn.metrics import classification_report, confusion_matrix
 
     y_pred = model.predict(X_test)
-    # st.write(classification_report(y_test, y_pred))
-    # st.write(confusion_matrix(y_test, y_pred))
 
     return model
 
 
 def aggregate_risk_by_date(df):
 
-    # First let's make sure we have a single date column to work with
     if 'Date' not in df.columns:
-        # Create Date from Year, Month, Day if needed
         df['Date'] = pd.to_datetime(df[['Year', 'Month', 'Day']])
 
-    # First ensure 'Date' is in datetime format
     df['Date'] = pd.to_datetime(df['Date'])
 
-    # Extract Year, Month, and Day components
     df['Year'] = df['Date'].dt.year
     df['Month'] = df['Date'].dt.month
     df['Day'] = df['Date'].dt.day
 
-    # Now aggregate to get the maximum risk level for each site and date
     aggregated_df = df.groupby(['SiteID', 'Date']).agg({
-        'risk_level': 'max',  # Take highest risk from any indicator
-        'Value': ['mean', 'min', 'max'],  # Aggregate value metrics
-        # Include other columns you want to keep
+        'risk_level': 'max',
+        'Value': ['mean', 'min', 'max'],
         'Year': 'first',
         'Month': 'first',
         'Day': 'first'
     }).reset_index()
 
-    # Flatten multi-level column names
     aggregated_df.columns = ['_'.join(col).strip('_') if isinstance(col, tuple) else col for col in aggregated_df.columns]
-    # st.write('aggregate df columns are ', aggregated_df.columns)
-    # st.write(f"Original data: {len(df)} rows")
-    # st.write(f"Aggregated data: {len(aggregated_df)} rows")
-    # st.write(f"Unique site-date combinations: {df.groupby(['SiteID', 'Date']).ngroups}")
 
-    # Verify our aggregation worked as expected
-    # st.write("Risk level distribution before aggregation:")
-    # st.write(df['risk_level'].value_counts())
-    # st.write("aggregated df columns:", aggregated_df.columns.tolist())
     aggregated_df = aggregated_df.rename(columns={'risk_level_max': 'risk_level'})
     aggregated_df = aggregated_df.rename(columns={'Day_first': 'Day'})
     aggregated_df = aggregated_df.rename(columns={'Month_first': 'Month'})
     aggregated_df = aggregated_df.rename(columns={'Year_first': 'Year'})
-    # st.write("Risk level distribution after taking max per site-date:")
 
-    # st.write(aggregated_df['risk_level'].value_counts())
     return aggregated_df
 
 
@@ -273,7 +210,6 @@ def predict_risk_for_site_month(model, df, site_id, target_month, current_year):
     Returns:
     Predicted risk level
     """
-    # Filter for the specific site and month (from previous years)
     historical_data = df[(df['SiteID'] == site_id) & 
                          (df['Month'] == target_month) & 
                          (df['Year'] < current_year)]
@@ -282,71 +218,44 @@ def predict_risk_for_site_month(model, df, site_id, target_month, current_year):
         st.write(f"No historical data found for SiteID={site_id}, Month={target_month}")
         return None
     
-    # Get the most recent year's data for this site and month
     most_recent_year = historical_data['Year'].max()
     most_recent_data = historical_data[historical_data['Year'] == most_recent_year]
     
-    # Create input data for the model using the same structure as training data
-    # But with Year updated to current year
     input_data = most_recent_data.copy()
     input_data['Year'] = current_year
     input_data['Month'] = target_month
     input_data['Date'] = pd.to_datetime([f"{current_year}-{target_month}-15"])[0]
-    # Select only the columns used by the model
     model_features = [col for col in input_data.columns if col != 'risk_level']
-    # st.write('model features:  ', input_data[model_features])
     
-    # Make prediction
     predicted_risk = model.predict(input_data[model_features])[0]
     
     return predicted_risk
 
 def aggregate_for_calendar_year(site_id, df):
-    # Assuming your dataframe is called 'df' with columns 'siteID', 'date', and 'risk_level'
     site_data = df[df['SiteID'] == site_id].copy()
-    # First, make sure your date column is datetime
     site_data['Date'] = pd.to_datetime(df['Date'])
 
-    # Group by siteID, month, and day, then calculate mean risk level
     calendar_df = site_data.groupby(['SiteID', 'Month', 'Day'])['risk_level'].mean().reset_index()
 
-    # Round to integers if your risk levels should be whole numbers
-    # If you want to keep decimals, remove this line
     calendar_df['risk_level'] = calendar_df['risk_level'].round().astype(int)
 
-    # Create a date column for visualization (using a reference year, e.g., 2025)
-    # st.dataframe(calendar_df)
-    # calendar_df['Date'] = pd.to_datetime({
-    #     'year': 2024,
-    #     'month': calendar_df['Month'],
-    #     'day': calendar_df['Day']
-    # })
     
-    # Use apply to create dates properly
     calendar_df['Date'] = calendar_df.apply(
         lambda row: pd.Timestamp(year=2025, month=row['Month'], day=row['Day']), axis=1
     ) 
     return calendar_df
 
 def heatmap_risk_by_date(site_id, site_data):
-    # Create heatmap of risk by day and month
     
     try:
-        # Convert day-month to a date string for better sorting
-        # site_data['MonthDay'] = site_data['DateObj'].dt.strftime('%m-%d')
         
-        # Count occurrences of each risk level by day of year
         daily_data = site_data.copy()
-        # st.dataframe(daily_data)
     
 
         if daily_data['risk_level'].isnull().any():
             st.write("Warning: There are NaN values in 'risk_level' column")
-        # Create matrix for heatmap (months x days)
-        # Initialize with NaN
         calendar_data = np.full((12, 31), np.nan)
         
-        # Fill in with average risk values
         for m in range(1, 13):
             month_data = daily_data[daily_data['Month'] == m]
             for d in range(1, 32):
@@ -354,17 +263,13 @@ def heatmap_risk_by_date(site_id, site_data):
                 if len(day_data) > 0:
                     calendar_data[m-1, d-1] = day_data['risk_level'].mean()
         
-        # Create calendar heatmap
         fig = plt.figure(figsize=(14, 8))
         
-        # Custom colormap: green for safe, yellow for moderate, red for high
         cmap = plt.cm.colors.ListedColormap(['green', 'yellow', 'red'])
         bounds = [0, 0.67, 1.33, 2]
         norm = plt.cm.colors.BoundaryNorm(bounds, cmap.N)
         
-        # Create heatmap
         heatmap = plt.pcolormesh(calendar_data.T, cmap=cmap, norm=norm)
-        # Set labels
         plt.yticks(np.arange(0.5, 31.5), np.arange(1, 32))
         plt.xticks(np.arange(0.5, 12.5), ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
@@ -372,28 +277,26 @@ def heatmap_risk_by_date(site_id, site_data):
         plt.title(f'Historical Calendar View of Risk Levels for {site_id}', fontsize=18)
         plt.ylabel('Day of Month')
         
-        # Add colorbar
         cbar = plt.colorbar(heatmap)
         cbar.set_ticks([0.33, 1, 1.67])
         cbar.set_ticklabels(['Safe', 'Moderate Risk', 'High Risk'])
         
         plt.tight_layout()
-        st.pyplot(fig)  # Return the monthly figure for display
+        st.pyplot(fig)
     except Exception as e:
         st.write(f"Error creating calendar visualization: {e}")
     
  
 
-# Import the new data module
 from asian_water_quality_data import (
     ASIAN_COUNTRIES, 
     get_basins_for_country, 
     fetch_country_metadata,
     fetch_water_quality_data,
+    fetch_live_water_data,
     normalize_uploaded_data
 )
 
-# ==================== WATER QUALITY STATUS FUNCTIONS ====================
 
 def get_water_quality_status(risk_level):
     """Convert numeric risk level to descriptive status."""
@@ -415,7 +318,6 @@ def calculate_basin_status(data, site_id):
     avg_risk = site_data['risk_level'].mean()
     status, emoji, color = get_water_quality_status(avg_risk)
     
-    # Calculate indicator-specific stats
     stats = {}
     if 'Indicator' in site_data.columns:
         for indicator in site_data['Indicator'].unique():
@@ -436,7 +338,6 @@ def display_quality_summary(data, site_id):
     """Display a summary card of water quality status."""
     status, emoji, color, stats = calculate_basin_status(data, site_id)
     
-    # Main status display
     st.markdown(f"""
     <div style='background: linear-gradient(135deg, {color}22, {color}44); 
                 border-left: 4px solid {color}; 
@@ -448,19 +349,18 @@ def display_quality_summary(data, site_id):
     </div>
     """, unsafe_allow_html=True)
     
-    # Indicator breakdown
     if stats:
         cols = st.columns(min(4, len(stats)))
         for i, (indicator, info) in enumerate(list(stats.items())[:4]):
             with cols[i % 4]:
+                # Use full indicator name without truncation
                 st.metric(
-                    label=f"{info['emoji']} {indicator[:12]}...",
+                    label=f"{info['emoji']} {indicator}",
                     value=f"{info['value']:.2f}",
                     delta=info['status'],
                     delta_color="off"
                 )
 
-# ==================== VISUALIZATION FUNCTIONS ====================
 
 def create_bar_chart(data, site_id, indicator='Chl-a'):
     """Create a bar chart for the selected site and indicator with quality status."""
@@ -469,10 +369,8 @@ def create_bar_chart(data, site_id, indicator='Chl-a'):
         st.warning(f"No data available for {site_id}")
         return
     
-    # Display quality summary first
     display_quality_summary(data, site_id)
     
-    # Filter by indicator if available
     if 'Indicator' in site_data.columns:
         indicator_data = site_data[site_data['Indicator'] == indicator]
         if indicator_data.empty:
@@ -480,11 +378,9 @@ def create_bar_chart(data, site_id, indicator='Chl-a'):
     else:
         indicator_data = site_data
     
-    # Group by month for bar chart
     if 'Month' in indicator_data.columns and 'Value' in indicator_data.columns:
         monthly_avg = indicator_data.groupby('Month')['Value'].mean().reset_index()
         
-        # Get risk levels for coloring
         if 'risk_level' in indicator_data.columns:
             monthly_risk = indicator_data.groupby('Month')['risk_level'].mean().reset_index()
             colors = ['#27ae60' if r <= 0.5 else '#f39c12' if r <= 1.0 else '#e67e22' if r <= 1.5 else '#e74c3c' 
@@ -504,7 +400,6 @@ def create_bar_chart(data, site_id, indicator='Chl-a'):
         ax.set_title(f'{indicator} Monthly Average for {site_id}', fontsize=14, fontweight='bold')
         ax.grid(axis='y', alpha=0.3)
         
-        # Add legend for colors
         from matplotlib.patches import Patch
         legend_elements = [
             Patch(facecolor='#27ae60', label='Excellent'),
@@ -521,16 +416,14 @@ def create_bar_chart(data, site_id, indicator='Chl-a'):
 
 
 def create_line_chart(data, site_id, indicator='Chl-a'):
-    """Create a line chart showing trends over time with quality status."""
+    """Create a line chart showing trends over time with quality status and new data sections."""
     site_data = data[data['SiteID'] == site_id]
     if site_data.empty:
         st.warning(f"No data available for {site_id}")
         return
     
-    # Display quality summary first
     display_quality_summary(data, site_id)
     
-    # Filter by indicator if available
     if 'Indicator' in site_data.columns:
         indicator_data = site_data[site_data['Indicator'] == indicator].copy()
         if indicator_data.empty:
@@ -541,22 +434,53 @@ def create_line_chart(data, site_id, indicator='Chl-a'):
     if 'SampleDateTime' in indicator_data.columns and 'Value' in indicator_data.columns:
         indicator_data = indicator_data.sort_values('SampleDateTime')
         
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.plot(indicator_data['SampleDateTime'], indicator_data['Value'], 
-                color='#3498db', linewidth=2, marker='o', markersize=4, alpha=0.7)
+        fig, ax = plt.subplots(figsize=(14, 6))
         
-        # Add trend line
+        # Check if we have update sequence data (live mode with accumulated data)
+        if 'UpdateSequence' in indicator_data.columns:
+            # Color code different update sequences to show new data sections
+            sequences = indicator_data['UpdateSequence'].unique()
+            colors = plt.cm.viridis(np.linspace(0.2, 1, len(sequences)))
+            
+            for i, seq in enumerate(sorted(sequences)):
+                seq_data = indicator_data[indicator_data['UpdateSequence'] == seq]
+                is_latest = (seq == max(sequences))
+                
+                # Plot each sequence with different styling
+                ax.plot(seq_data['SampleDateTime'], seq_data['Value'],
+                       color=colors[i], linewidth=3 if is_latest else 1.5,
+                       marker='o', markersize=8 if is_latest else 4,
+                       alpha=1.0 if is_latest else 0.5,
+                       label=f'Update #{int(seq)}' if is_latest or i == 0 else None)
+                
+                # Highlight latest data point with annotation
+                if is_latest and not seq_data.empty:
+                    latest_point = seq_data.iloc[-1]
+                    ax.annotate(f'NEW: {latest_point["Value"]:.2f}',
+                               xy=(latest_point['SampleDateTime'], latest_point['Value']),
+                               xytext=(10, 10), textcoords='offset points',
+                               fontsize=10, fontweight='bold', color='#e74c3c',
+                               bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.7),
+                               arrowprops=dict(arrowstyle='->', color='#e74c3c'))
+            
+            # Show total data points and updates
+            st.caption(f"📊 Showing {len(sequences)} update batches with {len(indicator_data)} total readings")
+        else:
+            # Standard line plot for non-live data
+            ax.plot(indicator_data['SampleDateTime'], indicator_data['Value'], 
+                    color='#3498db', linewidth=2, marker='o', markersize=4, alpha=0.7)
+        
         if len(indicator_data) > 2:
             z = np.polyfit(range(len(indicator_data)), indicator_data['Value'], 1)
             p = np.poly1d(z)
             ax.plot(indicator_data['SampleDateTime'], p(range(len(indicator_data))), 
                     '--', color='#e74c3c', alpha=0.8, label='Trend')
         
-        ax.set_xlabel('Date', fontsize=12)
+        ax.set_xlabel('Time', fontsize=12)
         ax.set_ylabel(f'{indicator} Value', fontsize=12)
-        ax.set_title(f'{indicator} Trend Over Time for {site_id}', fontsize=14, fontweight='bold')
+        ax.set_title(f'{indicator} Real-Time Trend for {site_id}', fontsize=14, fontweight='bold')
         ax.grid(alpha=0.3)
-        ax.legend()
+        ax.legend(loc='upper left')
         
         plt.xticks(rotation=45)
         plt.tight_layout()
@@ -572,16 +496,13 @@ def show_data_table(data, site_id):
         st.warning(f"No data available for {site_id}")
         return
     
-    # Display quality summary first
     display_quality_summary(data, site_id)
     
-    # Add Status column based on risk level
     if 'risk_level' in site_data.columns:
         site_data['Status'] = site_data['risk_level'].apply(
             lambda r: '🟢 Excellent' if r <= 0.5 else '🟡 Good' if r <= 1.0 else '🟠 Moderate' if r <= 1.5 else '🔴 Poor'
         )
     
-    # Select relevant columns
     display_cols = ['SampleDateTime', 'Indicator', 'Value', 'Units', 'Status']
     display_cols = [c for c in display_cols if c in site_data.columns]
     
@@ -595,9 +516,7 @@ def show_data_table(data, site_id):
         st.dataframe(site_data, use_container_width=True, height=400)
 
 
-# ==================== MAIN APPLICATION ====================
 
-# Page configuration for auto-refresh
 st.set_page_config(
     page_title="Asian Water Quality Dashboard",
     page_icon="🌊",
@@ -607,15 +526,18 @@ st.set_page_config(
 
 st.title("🌊 Asian Water Quality Dashboard - LIVE")
 
-# Initialize session state
 if 'data_source' not in st.session_state:
     st.session_state.data_source = 'api'
 if 'selected_country' not in st.session_state:
     st.session_state.selected_country = 'India'
 if 'last_refresh' not in st.session_state:
     st.session_state.last_refresh = datetime.now()
+# Live data history - accumulates readings over time for accurate time-series
+if 'live_data_history' not in st.session_state:
+    st.session_state.live_data_history = pd.DataFrame()
+if 'live_data_count' not in st.session_state:
+    st.session_state.live_data_count = 0
 
-# ==================== AUTO-REFRESH CONFIGURATION ====================
 
 st.sidebar.header("⚡ Live Updates")
 
@@ -628,13 +550,17 @@ refresh_interval = st.sidebar.slider(
     disabled=not auto_refresh
 )
 
-# Manual refresh button
 if st.sidebar.button("🔄 Refresh Now"):
     st.cache_data.clear()
     st.session_state.last_refresh = datetime.now()
     st.rerun()
 
-# Auto-refresh logic
+if st.sidebar.button("🗑️ Clear History"):
+    st.session_state.live_data_history = pd.DataFrame()
+    st.session_state.live_data_count = 0
+    st.cache_data.clear()
+    st.rerun()
+
 if auto_refresh:
     import time
     time_since_refresh = (datetime.now() - st.session_state.last_refresh).total_seconds()
@@ -643,17 +569,14 @@ if auto_refresh:
         st.session_state.last_refresh = datetime.now()
         st.rerun()
     
-    # Show countdown
     remaining = int(refresh_interval - time_since_refresh)
     st.sidebar.caption(f"⏱️ Next refresh in: {remaining}s")
 
 st.sidebar.divider()
 
-# ==================== SIDEBAR CONTROLS ====================
 
 st.sidebar.header("🌏 Region Selection")
 
-# Country selector with India as default
 country_index = ASIAN_COUNTRIES.index('India') if 'India' in ASIAN_COUNTRIES else 0
 
 def on_country_change():
@@ -669,7 +592,6 @@ selected_country = st.sidebar.selectbox(
     on_change=on_country_change
 )
 
-# Fetch and display country metadata
 country_meta = fetch_country_metadata(selected_country)
 flag_emoji = country_meta.get('flag', '🌏')
 st.sidebar.markdown(f"### {flag_emoji} {selected_country}")
@@ -687,7 +609,6 @@ else:
 
 st.sidebar.divider()
 
-# File Upload Section
 st.sidebar.header("📁 Data Upload")
 uploaded_file = st.sidebar.file_uploader(
     "Upload CSV/Excel (optional)",
@@ -697,16 +618,54 @@ uploaded_file = st.sidebar.file_uploader(
 
 st.sidebar.divider()
 
-# ==================== DATA LOADING LOGIC ====================
+# Live Stream Mode toggle
+live_mode = st.sidebar.toggle("🔴 Live Streaming Mode", value=True, help="Enable real-time data updates")
 
 @st.cache_data(ttl=1800)
 def load_api_data(country):
     """Load data from API for the selected country."""
     return fetch_water_quality_data(country)
 
-# Determine data source and load data
+def load_live_data(country, refresh_key):
+    """Load live streaming data (bypasses cache for real-time updates)."""
+    return fetch_live_water_data(country)
+
+def accumulate_live_data(new_data, country):
+    """Accumulate new live data readings into session history for accurate time-series."""
+    # Reset history if country changed
+    if st.session_state.get('last_country') != country:
+        st.session_state.live_data_history = pd.DataFrame()
+        st.session_state.live_data_count = 0
+        st.session_state.last_country = country
+    
+    # Filter only the truly "live" readings (current moment readings)
+    if 'IsLive' in new_data.columns:
+        live_readings = new_data[new_data['IsLive'] == True].copy()
+    else:
+        live_readings = new_data.head(len(new_data) // 6).copy()  # Take just newest readings
+    
+    if not live_readings.empty:
+        # Add a unique update sequence number
+        st.session_state.live_data_count += 1
+        live_readings['UpdateSequence'] = st.session_state.live_data_count
+        live_readings['ReceivedAt'] = datetime.now()
+        
+        # Append to history
+        if st.session_state.live_data_history.empty:
+            st.session_state.live_data_history = live_readings
+        else:
+            st.session_state.live_data_history = pd.concat([
+                st.session_state.live_data_history, 
+                live_readings
+            ], ignore_index=True)
+        
+        # Keep last 500 readings to prevent memory issues
+        if len(st.session_state.live_data_history) > 500:
+            st.session_state.live_data_history = st.session_state.live_data_history.tail(500)
+    
+    return st.session_state.live_data_history
+
 if uploaded_file is not None:
-    # Prioritize uploaded data
     st.session_state.data_source = 'upload'
     try:
         if uploaded_file.name.endswith('.csv'):
@@ -717,43 +676,68 @@ if uploaded_file is not None:
         st.sidebar.success("✅ Using uploaded data")
     except Exception as e:
         st.sidebar.error(f"Error reading file: {e}")
-        df = load_api_data(selected_country)
-        st.session_state.data_source = 'api'
+        if live_mode:
+            new_data = load_live_data(selected_country, st.session_state.last_refresh)
+            df = accumulate_live_data(new_data, selected_country)
+            st.session_state.data_source = 'live'
+        else:
+            df = load_api_data(selected_country)
+            st.session_state.data_source = 'api'
 else:
-    # Use API data
-    st.session_state.data_source = 'api'
-    df = load_api_data(selected_country)
-    st.sidebar.info(f"📡 Live data for {selected_country}")
+    if live_mode:
+        # Live mode: fetch new data and accumulate it
+        st.session_state.data_source = 'live'
+        new_data = load_live_data(selected_country, st.session_state.last_refresh)
+        df = accumulate_live_data(new_data, selected_country)
+        update_count = st.session_state.live_data_count
+        st.sidebar.markdown(f"🔴 **LIVE** - Update #{update_count}")
+        st.sidebar.caption(f"📊 {len(df)} accumulated readings")
+    else:
+        st.session_state.data_source = 'api'
+        df = load_api_data(selected_country)
+        st.sidebar.info(f"📡 Historical data for {selected_country}")
 
-# Apply risk level calculation
 if 'risk_level' not in df.columns:
     df['risk_level'] = df.apply(determine_risk_level, axis=1)
 
-# ==================== BASIN/SITE SELECTION ====================
 
 st.sidebar.header("🏞️ Basin Selection")
 
-# Get sites from current data
 if st.session_state.data_source == 'upload':
     available_sites = sorted(df['SiteID'].unique().tolist())
 else:
     available_sites = get_basins_for_country(selected_country)
 
-# Filter out numeric-only site IDs
 filtered_sites = [s for s in available_sites if not (isinstance(s, str) and s.isdigit())]
 if not filtered_sites:
     filtered_sites = available_sites
 
-site = st.sidebar.selectbox('Basin/Site', sorted(filtered_sites))
+site = st.sidebar.selectbox('River/Basin', sorted(filtered_sites))
 
-# Month selection
-months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-month = st.sidebar.selectbox('Month', months)
+# Year and Month selection with clear current year display
 current_year = datetime.now().year
+st.sidebar.markdown(f"**📅 Current Year: {current_year}**")
+
+# Year range from 1999 to current year
+all_years = list(range(current_year, 1998, -1))  # Descending from current year to 1999
+selected_year = st.sidebar.selectbox('Year', all_years, index=0)
+
+
+months = ['All', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+month = st.sidebar.selectbox('Month', months)
+
+# Filter data by selected year and month
+if 'Year' in df.columns and selected_year:
+    df = df[df['Year'] == selected_year]
+
+if month != 'All' and 'Month' in df.columns:
+    month_idx = months.index(month)  # 1-indexed since 'All' is at index 0
+    df = df[df['Month'] == month_idx]
+
+st.sidebar.caption(f"📊 Showing data for {month} {selected_year}")
 
 st.sidebar.divider()
 
-# ==================== VISUALIZATION CONTROLS ====================
 
 st.sidebar.header("📊 Visualization")
 
@@ -763,7 +747,6 @@ chart_type = st.sidebar.radio(
     horizontal=False
 )
 
-# Indicator selection for charts
 available_indicators = list(indicator_thresholds.keys())
 if 'Indicator' in df.columns:
     data_indicators = df['Indicator'].unique().tolist()
@@ -771,9 +754,7 @@ if 'Indicator' in df.columns:
 
 selected_indicator = st.sidebar.selectbox('Indicator', available_indicators)
 
-# ==================== MAIN PANEL ====================
 
-# Risk color mapping
 risk_color_map = {
     "safe": "green",
     "moderate": "yellow", 
@@ -781,31 +762,24 @@ risk_color_map = {
     "unknown": "gray"
 }
 
-# Prediction section - Using simplified heuristic approach
 if st.sidebar.button("🔮 Run Prediction"):
     with st.spinner("Analyzing water quality..."):
-        # Use direct data analysis instead of ML model
         site_data = df[df['SiteID'] == site]
         
         if not site_data.empty and 'risk_level' in site_data.columns:
-            # Calculate average risk for this site
             avg_risk = site_data['risk_level'].mean()
             
-            # Get month-specific data if available
             month_idx = months.index(month) + 1
             month_data = site_data[site_data['Month'] == month_idx]
             if not month_data.empty:
                 monthly_risk = month_data['risk_level'].mean()
-                # Weighted average of monthly and overall
                 predicted_risk = (monthly_risk * 0.7 + avg_risk * 0.3)
             else:
                 predicted_risk = avg_risk
             
-            # Get quality status
             status, emoji, color = get_water_quality_status(predicted_risk)
             
-            # Display prediction result
-            st.subheader(f"Water Quality Prediction for {site} in {month}/{current_year}")
+            st.subheader(f"Water Quality Prediction for {site} in {month}/{selected_year}")
             
             st.markdown(f"""
             <div style='background: linear-gradient(135deg, {color}22, {color}44); 
@@ -819,7 +793,6 @@ if st.sidebar.button("🔮 Run Prediction"):
             </div>
             """, unsafe_allow_html=True)
             
-            # Show additional context
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.metric("Risk Score", f"{predicted_risk:.2f}", delta="Lower is better", delta_color="inverse")
@@ -834,13 +807,73 @@ if st.sidebar.button("🔮 Run Prediction"):
 st.divider()
 
 current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-st.subheader(f"🌊 Current Water Quality - {site}")
-st.caption(f"As of {current_time}")
+
+# Show live indicator if in live mode
+if st.session_state.data_source == 'live':
+    st.markdown("""
+    <style>
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.4; }
+        100% { opacity: 1; }
+    }
+    .live-indicator {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(135deg, #ff4444, #cc0000);
+        padding: 6px 14px;
+        border-radius: 20px;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
+    }
+    .live-dot {
+        width: 10px;
+        height: 10px;
+        background: white;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: pulse 1.5s infinite;
+    }
+    </style>
+    <div style='display: flex; align-items: center; gap: 15px; margin-bottom: 10px;'>
+        <div class='live-indicator'>
+            <div class='live-dot'></div>
+            LIVE
+        </div>
+        <span style='color: #666; font-size: 14px;'>Real-time sensor data • Updated: """ + current_time + """</span>
+    </div>
+    """, unsafe_allow_html=True)
+    st.subheader(f"🌊 Current Water Quality - {site}")
+else:
+    st.subheader(f"🌊 Current Water Quality - {site}")
+    st.caption(f"As of {current_time}")
 
 site_data = df[df['SiteID'] == site]
 if not site_data.empty and 'risk_level' in site_data.columns:
     current_risk = site_data['risk_level'].mean()
     status, emoji, color = get_water_quality_status(current_risk)
+    
+    # Get data source and confidence info if available
+    data_source = site_data['DataSource'].iloc[0] if 'DataSource' in site_data.columns else 'Simulated'
+    confidence = site_data['Confidence'].iloc[0] if 'Confidence' in site_data.columns else 'Medium'
+    quality_class = site_data['QualityClass'].iloc[0] if 'QualityClass' in site_data.columns else 'Unknown'
+    is_real_data = site_data['IsRealData'].iloc[0] if 'IsRealData' in site_data.columns else False
+    
+    # Confidence color coding - green for real data
+    if 'Real Data' in str(confidence) or is_real_data:
+        conf_color = '#27ae60'  # Green for real data
+        data_badge = '✅ REAL DATA'
+        badge_bg = '#27ae60'
+    elif 'Baseline' in str(confidence):
+        conf_color = '#f39c12'  # Orange for baseline
+        data_badge = '📊 Baseline'
+        badge_bg = '#f39c12'
+    else:
+        conf_color = '#e74c3c'  # Red for estimated
+        data_badge = '⚠️ Estimated'
+        badge_bg = '#e74c3c'
     
     st.markdown(f"""
     <div style='background: linear-gradient(135deg, {color}22, {color}44); 
@@ -848,36 +881,51 @@ if not site_data.empty and 'risk_level' in site_data.columns:
                 padding: 25px; 
                 text-align: center;
                 margin: 10px 0;'>
+        <div style='margin-bottom: 10px;'>
+            <span style='background: {badge_bg}; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px;'>
+                {data_badge}
+            </span>
+        </div>
         <h1 style='margin:0; font-size: 60px;'>{emoji}</h1>
         <h2 style='margin:10px 0; color: {color}; font-size: 32px; font-weight: bold;'>{status}</h2>
         <p style='margin:0; color: #666;'>Current Water Quality Status</p>
+        <div style='margin-top: 15px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;'>
+            <span style='background: #f0f0f0; padding: 5px 12px; border-radius: 15px; font-size: 12px;'>
+                📋 Quality Class: <strong>{quality_class}</strong>
+            </span>
+            <span style='background: #f0f0f0; padding: 5px 12px; border-radius: 15px; font-size: 12px;'>
+                🎯 Confidence: <strong style='color: {conf_color};'>{confidence}</strong>
+            </span>
+            <span style='background: #f0f0f0; padding: 5px 12px; border-radius: 15px; font-size: 12px;'>
+                📊 Source: <strong>{data_source}</strong>
+            </span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
     if 'Indicator' in site_data.columns:
-        st.markdown("**Latest Readings:**")
+        st.markdown("**📊 Latest Readings:**")
         cols = st.columns(4)
-        for i, indicator in enumerate(site_data['Indicator'].unique()[:8]):
+        indicators_list = list(site_data['Indicator'].unique()[:8])
+        for i, indicator in enumerate(indicators_list):
             ind_data = site_data[site_data['Indicator'] == indicator]
             if not ind_data.empty and 'Value' in ind_data.columns:
                 latest_val = ind_data['Value'].iloc[-1]
                 ind_risk = ind_data['risk_level'].mean() if 'risk_level' in ind_data.columns else 0
                 ind_status, ind_emoji, _ = get_water_quality_status(ind_risk)
                 with cols[i % 4]:
-                    st.metric(f"{ind_emoji} {indicator[:15]}", f"{latest_val:.2f}", ind_status)
+                    # Use full indicator name for clarity
+                    st.metric(f"{ind_emoji} {indicator}", f"{latest_val:.2f}", ind_status)
 
 st.divider()
 
 st.subheader(f"📈 {chart_type} View - {site}")
 
 if chart_type == "Heatmap":
-    # Display quality summary
     display_quality_summary(df, site)
     
-    # Create a simpler, more reliable heatmap
     site_data = df[df['SiteID'] == site]
     if not site_data.empty and 'Indicator' in site_data.columns and 'Month' in site_data.columns:
-        # Create pivot table: Indicators vs Months
         if 'Value' in site_data.columns:
             pivot_data = site_data.pivot_table(
                 values='Value', 
@@ -889,18 +937,16 @@ if chart_type == "Heatmap":
             if not pivot_data.empty:
                 fig, ax = plt.subplots(figsize=(14, 8))
                 
-                # Use seaborn heatmap for better visualization
                 import seaborn as sns
                 sns.heatmap(
                     pivot_data, 
                     annot=True, 
                     fmt='.1f', 
-                    cmap='RdYlGn_r',  # Red=high, Green=low values
+                    cmap='RdYlGn_r',
                     ax=ax,
                     cbar_kws={'label': 'Average Value'}
                 )
                 
-                # Set month labels
                 month_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
                 ax.set_xticklabels([month_labels[int(m)-1] for m in pivot_data.columns], rotation=45)
@@ -926,12 +972,16 @@ elif chart_type == "Line Chart":
 elif chart_type == "Data Table":
     show_data_table(df, site)
 
-# Footer with data source info
 st.divider()
 col1, col2, col3 = st.columns(3)
 with col1:
     st.caption(f"📍 Country: {selected_country}")
 with col2:
-    st.caption(f"📊 Data Source: {'Uploaded File' if st.session_state.data_source == 'upload' else 'Live API'}")
+    if st.session_state.data_source == 'upload':
+        st.caption("📊 Data Source: Uploaded File")
+    elif st.session_state.data_source == 'live':
+        st.caption("🔴 Data Source: Live Streaming")
+    else:
+        st.caption("📊 Data Source: Historical API")
 with col3:
     st.caption(f"📝 Records: {len(df):,}")
