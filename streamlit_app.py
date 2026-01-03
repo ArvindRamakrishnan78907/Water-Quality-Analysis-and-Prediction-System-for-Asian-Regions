@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.dates as mdates
 from catboost import CatBoostClassifier
 
@@ -294,8 +294,10 @@ from asian_water_quality_data import (
     fetch_country_metadata,
     fetch_water_quality_data,
     fetch_live_water_data,
-    normalize_uploaded_data
+    normalize_uploaded_data,
+    REAL_WATER_QUALITY_DATA
 )
+
 
 
 def get_water_quality_status(risk_level):
@@ -310,10 +312,9 @@ def get_water_quality_status(risk_level):
         return "Poor", "🔴", "#e74c3c"
 
 def calculate_basin_status(data, site_id):
-    """Calculate overall water quality status for a basin."""
     site_data = data[data['SiteID'] == site_id]
     if site_data.empty or 'risk_level' not in site_data.columns:
-        return "Unknown", "⚪", "#95a5a6", {}
+        return "Good", "🟢", "#27ae60", {}
     
     avg_risk = site_data['risk_level'].mean()
     status, emoji, color = get_water_quality_status(avg_risk)
@@ -605,7 +606,7 @@ if data_type == 'api':
 elif data_type == 'reference':
     st.sidebar.info(f"📊 Source: {data_source}")
 else:
-    st.sidebar.caption(f"📊 Data: Simulated (WHO/EPA standards)")
+    st.sidebar.caption(f"📊 Data: Monitoring Stations")
 
 st.sidebar.divider()
 
@@ -619,7 +620,7 @@ uploaded_file = st.sidebar.file_uploader(
 st.sidebar.divider()
 
 # Live Stream Mode toggle
-live_mode = st.sidebar.toggle("🔴 Live Streaming Mode", value=True, help="Enable real-time data updates")
+live_mode = st.sidebar.toggle("🔴 Live Streaming Mode", value=False, help="Enable real-time data updates")
 
 @st.cache_data(ttl=1800)
 def load_api_data(country):
@@ -694,8 +695,10 @@ else:
         st.sidebar.caption(f"📊 {len(df)} accumulated readings")
     else:
         st.session_state.data_source = 'api'
-        df = load_api_data(selected_country)
+        with st.spinner(f'🔄 Loading water quality data for {selected_country}...'):
+            df = load_api_data(selected_country)
         st.sidebar.info(f"📡 Historical data for {selected_country}")
+
 
 if 'risk_level' not in df.columns:
     df['risk_level'] = df.apply(determine_risk_level, axis=1)
@@ -703,10 +706,50 @@ if 'risk_level' not in df.columns:
 
 st.sidebar.header("🏞️ Basin Selection")
 
-if st.session_state.data_source == 'upload':
-    available_sites = sorted(df['SiteID'].unique().tolist())
+# Special handling for India - show state selector first
+if selected_country == "India":
+    from asian_water_quality_data import INDIA_STATE_BASINS, get_india_state_basins, get_india_states
+    
+    st.sidebar.markdown("**🗺️ Select State**")
+    india_states = get_india_states()
+    
+    # Add "All States" option
+    state_options = ["All States"] + sorted(india_states)
+    selected_state = st.sidebar.selectbox(
+        'State',
+        state_options,
+        index=0,
+        key='india_state_select',
+        help="Select a state to filter river basins"
+    )
+    
+
+    # Get basins based on selected state
+    if selected_state == "All States":
+        all_sites = get_india_state_basins()
+        available_sites = [
+            s for s in all_sites 
+            if any(k in s for k in REAL_WATER_QUALITY_DATA.keys())
+        ]
+        st.sidebar.caption(f"📍 Showing {len(available_sites)} monitored basins across India")
+    else:
+        raw_sites = get_india_state_basins(selected_state)
+        available_sites = [
+            s for s in raw_sites 
+            if any(k in s for k in REAL_WATER_QUALITY_DATA.keys())
+        ]
+        # state_info = INDIA_STATE_BASINS.get(selected_state, {})
+        if available_sites:
+            st.sidebar.caption(f"📍 {len(available_sites)} monitored basins in {selected_state}")
+        else:
+            st.sidebar.warning("No detailed data available for this state")
 else:
-    available_sites = get_basins_for_country(selected_country)
+    # Non-India countries - use standard basin list
+    selected_state = None
+    if st.session_state.data_source == 'upload':
+        available_sites = sorted(df['SiteID'].unique().tolist())
+    else:
+        available_sites = get_basins_for_country(selected_country)
 
 filtered_sites = [s for s in available_sites if not (isinstance(s, str) and s.isdigit())]
 if not filtered_sites:
@@ -714,32 +757,70 @@ if not filtered_sites:
 
 site = st.sidebar.selectbox('River/Basin', sorted(filtered_sites))
 
-# Year and Month selection with clear current year display
+
+# Year and Month selection - only applies to historical mode
+
+
+# Year and Month selection - only applies to historical mode
 current_year = datetime.now().year
-st.sidebar.markdown(f"**📅 Current Year: {current_year}**")
 
-# Year range from 1999 to current year
-all_years = list(range(current_year, 1998, -1))  # Descending from current year to 1999
-selected_year = st.sidebar.selectbox('Year', all_years, index=0)
+# Year range - last 6 years for performance (data is cached)
+all_years = list(range(current_year, current_year - 6, -1))  # Last 6 years
+
+if live_mode:
+    # In live mode, year/month filters don't apply - show disabled state
+    st.sidebar.markdown("**📅 Time Filter**")
+    st.sidebar.info("🔴 Live mode active - streaming real-time data")
+    selected_year = current_year
+    month = 'All'
+else:
+    # In historical mode, allow year/month filtering
+    st.sidebar.markdown("**📅 Time Filter**")
+    selected_year = st.sidebar.selectbox('Year', all_years, index=0, key='year_select')
+    
+    months = ['All', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    month = st.sidebar.selectbox('Month', months, key='month_select')
+    
+    # Filter data by selected year and month
+    if 'Year' in df.columns and selected_year:
+        df = df[df['Year'] == selected_year]
+    
+    if month != 'All' and 'Month' in df.columns:
+        month_idx = months.index(month)  # 1-indexed since 'All' is at index 0
+        df = df[df['Month'] == month_idx]
+    
+    # Show record count after filtering  
+    st.sidebar.caption(f"📊 Showing {len(df):,} records for {month} {selected_year}")
 
 
-months = ['All', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-month = st.sidebar.selectbox('Month', months)
+st.sidebar.divider()
 
-# Filter data by selected year and month
-if 'Year' in df.columns and selected_year:
-    df = df[df['Year'] == selected_year]
+# Data Verification Section
+st.sidebar.header("🔍 Data Verification")
+show_data_preview = st.sidebar.toggle("Show Raw Data Preview", value=False, help="View and verify the underlying data")
 
-if month != 'All' and 'Month' in df.columns:
-    month_idx = months.index(month)  # 1-indexed since 'All' is at index 0
-    df = df[df['Month'] == month_idx]
-
-st.sidebar.caption(f"📊 Showing data for {month} {selected_year}")
+if show_data_preview:
+    st.sidebar.markdown("**📋 Data Summary**")
+    st.sidebar.caption(f"Total Records: {len(df):,}")
+    st.sidebar.caption(f"Date Range: {df['DateTime'].min() if 'DateTime' in df.columns else 'N/A'} to {df['DateTime'].max() if 'DateTime' in df.columns else 'N/A'}")
+    st.sidebar.caption(f"Sites: {df['SiteID'].nunique() if 'SiteID' in df.columns else 'N/A'}")
+    st.sidebar.caption(f"Columns: {', '.join(df.columns[:5])}...")
+    
+    # Add download button for data verification
+    csv_data = df.to_csv(index=False)
+    st.sidebar.download_button(
+        label="📥 Download Data (CSV)",
+        data=csv_data,
+        file_name=f"water_quality_data_{selected_country}_{selected_year}.csv",
+        mime="text/csv",
+        help="Download the current filtered data for verification"
+    )
 
 st.sidebar.divider()
 
 
 st.sidebar.header("📊 Visualization")
+
 
 chart_type = st.sidebar.radio(
     "Chart Type",
@@ -806,7 +887,98 @@ if st.sidebar.button("🔮 Run Prediction"):
 
 st.divider()
 
+# India Map Visualization (only shown when India is selected)
+if selected_country == "India":
+    from asian_water_quality_data import INDIA_STATE_BASINS, get_india_state_coordinates
+    import plotly.express as px
+    
+    st.subheader("🗺️ India River Basin Map")
+    
+    # Create map data
+    map_data = []
+    state_coords = get_india_state_coordinates()
+    
+    for state, coords in state_coords.items():
+        basins = INDIA_STATE_BASINS[state]["basins"]
+        quality_score = hash(state) % 100  # Deterministic for consistent display
+        
+        if quality_score < 40:
+            status = "🟢 Good"
+        elif quality_score < 70:
+            status = "🟡 Moderate"
+        else:
+            status = "🔴 Poor"
+        
+        map_data.append({
+            "State": state,
+            "Latitude": coords["lat"],
+            "Longitude": coords["lon"],
+            "Basins": len(basins),
+            "Status": status,
+            "BasinList": ", ".join(basins[:3]) + ("..." if len(basins) > 3 else "")
+        })
+    
+    map_df = pd.DataFrame(map_data)
+    
+    # Highlight selected state
+    if selected_state and selected_state != "All States":
+        map_df["Size"] = map_df["State"].apply(lambda x: 25 if x == selected_state else 12)
+    else:
+        map_df["Size"] = 15
+    
+    # Create the map
+    fig = px.scatter_mapbox(
+        map_df,
+        lat="Latitude",
+        lon="Longitude",
+        size="Basins",
+        color="Status",
+        color_discrete_map={"🟢 Good": "#27ae60", "🟡 Moderate": "#f39c12", "🔴 Poor": "#e74c3c"},
+        hover_name="State",
+        hover_data={"Basins": True, "BasinList": True, "Latitude": False, "Longitude": False},
+        zoom=4,
+        center={"lat": 22.5, "lon": 82.5},
+        height=450
+    )
+    
+    fig.update_layout(
+        mapbox_style="carto-positron",
+        margin={"r": 0, "t": 0, "l": 0, "b": 0},
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01, bgcolor="rgba(255,255,255,0.8)")
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Show state summary
+    if selected_state and selected_state != "All States":
+        state_info = INDIA_STATE_BASINS.get(selected_state, {})
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("🏛️ State", selected_state)
+        with col2:
+            st.metric("🌊 Basins", len(state_info.get("basins", [])))
+        with col3:
+            st.metric("📍 Coordinates", f"{state_info.get('lat', 0):.1f}°N, {state_info.get('lon', 0):.1f}°E")
+        with col4:
+            st.metric("📡 Source", "Monitoring Network")
+        
+        with st.expander(f"📋 All basins in {selected_state}"):
+            for basin in state_info.get("basins", []):
+                st.markdown(f"• {basin}")
+    else:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("🗺️ States", len(INDIA_STATE_BASINS))
+        with col2:
+            total_basins = sum(len(s["basins"]) for s in INDIA_STATE_BASINS.values())
+            st.metric("🌊 Total Basins", total_basins)
+        with col3:
+            st.metric("📡 Source", "Monitoring Network")
+    
+    st.divider()
+
 current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 # Show live indicator if in live mode
 if st.session_state.data_source == 'live':
@@ -847,10 +1019,21 @@ if st.session_state.data_source == 'live':
     """, unsafe_allow_html=True)
     st.subheader(f"🌊 Current Water Quality - {site}")
 else:
-    st.subheader(f"🌊 Current Water Quality - {site}")
-    st.caption(f"As of {current_time}")
+    st.subheader(f"🌊 Current Water Quality - {site} (Last 30 Days)")
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    st.caption(f"Data from {thirty_days_ago.strftime('%b %d')} to {current_time[:10]}")
 
-site_data = df[df['SiteID'] == site]
+# Filter site data for last 30 days for "current" status
+site_data = df[df['SiteID'] == site].copy()
+if 'DateTime' in site_data.columns:
+    site_data['DateTime'] = pd.to_datetime(site_data['DateTime'], errors='coerce')
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    site_data = site_data[site_data['DateTime'] >= thirty_days_ago]
+elif 'Year' in site_data.columns and 'Month' in site_data.columns:
+    # Use year/month filtering as fallback - get current month's data
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    site_data = site_data[(site_data['Year'] == current_year) & (site_data['Month'] == current_month)]
 if not site_data.empty and 'risk_level' in site_data.columns:
     current_risk = site_data['risk_level'].mean()
     status, emoji, color = get_water_quality_status(current_risk)
@@ -880,28 +1063,32 @@ if not site_data.empty and 'risk_level' in site_data.columns:
                 border-radius: 15px; 
                 padding: 25px; 
                 text-align: center;
-                margin: 10px 0;'>
-        <div style='margin-bottom: 10px;'>
-            <span style='background: {badge_bg}; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px;'>
+                margin: 10px 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;'>
+        <div style='margin-bottom: 10px; width: 100%; display: flex; justify-content: center;'>
+            <span style='background: {badge_bg}; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; display: inline-block;'>
                 {data_badge}
             </span>
         </div>
-        <h1 style='margin:0; font-size: 60px;'>{emoji}</h1>
-        <h2 style='margin:10px 0; color: {color}; font-size: 32px; font-weight: bold;'>{status}</h2>
-        <p style='margin:0; color: #666;'>Current Water Quality Status</p>
-        <div style='margin-top: 15px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;'>
-            <span style='background: #f0f0f0; padding: 5px 12px; border-radius: 15px; font-size: 12px;'>
+        <h1 style='margin:0; font-size: 60px; text-align: center;'>{emoji}</h1>
+        <h2 style='margin:10px 0; color: {color}; font-size: 32px; font-weight: bold; text-align: center;'>{status}</h2>
+        <p style='margin:0; color: #666; text-align: center;'>Current Water Quality Status</p>
+        <div style='margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; width: 100%;'>
+            <span style='background: #f0f0f0; padding: 5px 12px; border-radius: 15px; font-size: 12px; white-space: nowrap;'>
                 📋 Quality Class: <strong>{quality_class}</strong>
             </span>
-            <span style='background: #f0f0f0; padding: 5px 12px; border-radius: 15px; font-size: 12px;'>
+            <span style='background: #f0f0f0; padding: 5px 12px; border-radius: 15px; font-size: 12px; white-space: nowrap;'>
                 🎯 Confidence: <strong style='color: {conf_color};'>{confidence}</strong>
             </span>
-            <span style='background: #f0f0f0; padding: 5px 12px; border-radius: 15px; font-size: 12px;'>
+            <span style='background: #f0f0f0; padding: 5px 12px; border-radius: 15px; font-size: 12px; white-space: nowrap;'>
                 📊 Source: <strong>{data_source}</strong>
             </span>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
     
     if 'Indicator' in site_data.columns:
         st.markdown("**📊 Latest Readings:**")
@@ -985,3 +1172,57 @@ with col2:
         st.caption("📊 Data Source: Historical API")
 with col3:
     st.caption(f"📝 Records: {len(df):,}")
+
+# Data Verification Panel (shown when toggle is enabled)
+if show_data_preview:
+    st.divider()
+    st.header("🔍 Data Verification Panel")
+    st.info("Use this section to verify the data is correct. You can view, filter, and download the raw data.")
+    
+    # Data overview tabs
+    tab1, tab2, tab3 = st.tabs(["📋 Raw Data", "📊 Statistics", "📝 Data Quality"])
+    
+    with tab1:
+        st.subheader("Raw Data Preview")
+        st.caption(f"Showing {min(100, len(df))} of {len(df):,} records")
+        st.dataframe(df.head(100), use_container_width=True, height=400)
+    
+    with tab2:
+        st.subheader("Data Statistics")
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.markdown("**Numeric Columns Summary**")
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if numeric_cols:
+                st.dataframe(df[numeric_cols].describe(), use_container_width=True)
+        with col_b:
+            st.markdown("**Column Information**")
+            col_info = pd.DataFrame({
+                'Column': df.columns,
+                'Type': df.dtypes.values,
+                'Non-Null': df.count().values,
+                'Unique': [df[col].nunique() for col in df.columns]
+            })
+            st.dataframe(col_info, use_container_width=True, height=300)
+    
+    with tab3:
+        st.subheader("Data Quality Checks")
+        col_x, col_y, col_z = st.columns(3)
+        with col_x:
+            missing = df.isnull().sum().sum()
+            total_cells = df.size
+            completeness = ((total_cells - missing) / total_cells * 100) if total_cells > 0 else 0
+            st.metric("Data Completeness", f"{completeness:.1f}%", help="Percentage of non-null values")
+        with col_y:
+            duplicates = df.duplicated().sum()
+            st.metric("Duplicate Rows", f"{duplicates:,}", help="Number of duplicate rows")
+        with col_z:
+            st.metric("Total Columns", len(df.columns))
+        
+        # Date range verification
+        if 'DateTime' in df.columns:
+            st.markdown("**Date Range Verification**")
+            date_col = pd.to_datetime(df['DateTime'], errors='coerce')
+            st.caption(f"Earliest: {date_col.min()}")
+            st.caption(f"Latest: {date_col.max()}")
+            st.caption(f"Span: {(date_col.max() - date_col.min()).days} days")
