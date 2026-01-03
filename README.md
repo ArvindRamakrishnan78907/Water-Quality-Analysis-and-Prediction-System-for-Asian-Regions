@@ -1,4 +1,4 @@
-# 🌊 Asian Water Quality Dashboard
+#  Asian Water Quality Dashboard
 
 A real-time water quality monitoring dashboard for Asian countries, built with Streamlit.
 
@@ -6,7 +6,7 @@ A real-time water quality monitoring dashboard for Asian countries, built with S
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-## 🚀 Quick Start
+##  Quick Start
 
 ```bash
 # Clone the repository
@@ -22,7 +22,7 @@ streamlit run streamlit_app.py
 
 Open http://localhost:8501 in your browser.
 
-## ✨ Features
+## Features
 
 - **49 Asian Countries** with comprehensive river basin data
 - **Real-time API** integration for Hong Kong (EPD)
@@ -32,7 +32,7 @@ Open http://localhost:8501 in your browser.
 - **Prediction System**: Risk assessment based on historical data
 - **File Upload**: Support for custom CSV/Excel data
 
-## 📊 Data Sources
+##  Data Sources
 
 | Country | Source | Type |
 |---------|--------|------|
@@ -43,7 +43,7 @@ Open http://localhost:8501 in your browser.
 | South Korea | Water Environment Information System | Reference |
 | Others | Simulated (WHO/EPA standards) | Simulated |
 
-## 🔬 Water Quality Indicators
+##  Water Quality Indicators
 
 Based on WHO/EPA scientific standards:
 
@@ -55,7 +55,7 @@ Based on WHO/EPA scientific standards:
 - **Dissolved Oxygen** (mg/L) - Aquatic life support
 - **Turbidity** (NTU) - Water clarity
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 ├── streamlit_app.py          # Main Streamlit application
@@ -64,12 +64,12 @@ Based on WHO/EPA scientific standards:
 └── README.md                 # This file
 ```
 
-## 🛠️ Requirements
+##  Requirements
 
 - Python 3.8+
 - Dependencies in `requirements.txt`
 
-## 📄 License
+##  License
 
 MIT License - Feel free to use and modify.
 
