@@ -619,9 +619,6 @@ uploaded_file = st.sidebar.file_uploader(
 
 st.sidebar.divider()
 
-# Live Stream Mode toggle
-live_mode = st.sidebar.toggle("🔴 Live Streaming Mode", value=False, help="Enable real-time data updates")
-
 @st.cache_data(ttl=1800)
 def load_api_data(country):
     """Load data from API for the selected country."""
@@ -666,6 +663,8 @@ def accumulate_live_data(new_data, country):
     
     return st.session_state.live_data_history
 
+live_mode = False
+
 if uploaded_file is not None:
     st.session_state.data_source = 'upload'
     try:
@@ -691,13 +690,18 @@ else:
         new_data = load_live_data(selected_country, st.session_state.last_refresh)
         df = accumulate_live_data(new_data, selected_country)
         update_count = st.session_state.live_data_count
-        st.sidebar.markdown(f"🔴 **LIVE** - Update #{update_count}")
-        st.sidebar.caption(f"📊 {len(df)} accumulated readings")
     else:
         st.session_state.data_source = 'api'
-        with st.spinner(f'🔄 Loading water quality data for {selected_country}...'):
-            df = load_api_data(selected_country)
-        st.sidebar.info(f"📡 Historical data for {selected_country}")
+        loading_placeholder = st.empty()
+        loading_placeholder.markdown("""
+        <div style='text-align: center; padding: 50px;'>
+            <div style='font-size: 48px; animation: pulse 1.5s infinite;'>🌊</div>
+            <p style='color: #666; margin-top: 15px;'>Loading water quality data...</p>
+        </div>
+        <style>@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }</style>
+        """, unsafe_allow_html=True)
+        df = load_api_data(selected_country)
+        loading_placeholder.empty()
 
 
 if 'risk_level' not in df.columns:
@@ -758,39 +762,47 @@ if not filtered_sites:
 site = st.sidebar.selectbox('River/Basin', sorted(filtered_sites))
 
 
-# Year and Month selection - only applies to historical mode
 
 
-# Year and Month selection - only applies to historical mode
+
 current_year = datetime.now().year
+current_month = datetime.now().month
+all_years = list(range(current_year, current_year - 6, -1))
 
-# Year range - last 6 years for performance (data is cached)
-all_years = list(range(current_year, current_year - 6, -1))  # Last 6 years
+st.sidebar.markdown("**📅 Time Filter**")
+selected_year = st.sidebar.selectbox('Year', all_years, index=1, key='year_select')
+
+live_mode = (selected_year == current_year)
 
 if live_mode:
-    # In live mode, year/month filters don't apply - show disabled state
-    st.sidebar.markdown("**📅 Time Filter**")
-    st.sidebar.info("🔴 Live mode active - streaming real-time data")
-    selected_year = current_year
-    month = 'All'
+    st.sidebar.success("🔴 Live Streaming - Real-time data")
+    available_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][:current_month]
+    month = st.sidebar.selectbox('Month', available_months, key='month_select')
+    if 'Year' in df.columns:
+        df = df[df['Year'] == current_year]
+    if 'Month' in df.columns:
+        month_idx = available_months.index(month) + 1
+        df = df[df['Month'] == month_idx]
+    st.sidebar.info(f"📡 Only {available_months[-1]} {current_year} data available")
 else:
-    # In historical mode, allow year/month filtering
-    st.sidebar.markdown("**📅 Time Filter**")
-    selected_year = st.sidebar.selectbox('Year', all_years, index=0, key='year_select')
-    
     months = ['All', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     month = st.sidebar.selectbox('Month', months, key='month_select')
-    
-    # Filter data by selected year and month
-    if 'Year' in df.columns and selected_year:
+    if 'Year' in df.columns:
         df = df[df['Year'] == selected_year]
-    
     if month != 'All' and 'Month' in df.columns:
-        month_idx = months.index(month)  # 1-indexed since 'All' is at index 0
+        month_idx = months.index(month)
         df = df[df['Month'] == month_idx]
-    
-    # Show record count after filtering  
-    st.sidebar.caption(f"📊 Showing {len(df):,} records for {month} {selected_year}")
+
+st.sidebar.caption(f"📊 {len(df):,} records for {month} {selected_year}")
+
+data_type = country_meta.get('data_type', 'simulated')
+data_src = country_meta.get('data_source', 'Simulated')
+if data_type == 'api':
+    st.sidebar.markdown(f"**🟢 Source:** Live API ({data_src})")
+elif data_type == 'reference':
+    st.sidebar.markdown(f"**🟡 Source:** {data_src} (Official Reference)")
+else:
+    st.sidebar.markdown(f"**🔵 Source:** World Bank calibrated simulation")
 
 
 st.sidebar.divider()
@@ -1025,15 +1037,28 @@ else:
 
 # Filter site data for last 30 days for "current" status
 site_data = df[df['SiteID'] == site].copy()
+
+if site_data.empty:
+    st.markdown("""
+    <div style='background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%); border-radius: 20px; padding: 60px 40px;
+                text-align: center; border: 1px solid #d2d2d7; margin: 20px 0;'>
+        <div style='font-size: 64px; margin-bottom: 20px;'>📭</div>
+        <h2 style='color: #1d1d1f; margin: 0; font-weight: 600;'>Data Unavailable</h2>
+        <p style='color: #86868b; margin-top: 15px; font-size: 16px;'>
+            No water quality data available for this selection.<br>
+            Try selecting a different year, month, or basin.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.stop()
+
 if 'DateTime' in site_data.columns:
     site_data['DateTime'] = pd.to_datetime(site_data['DateTime'], errors='coerce')
     thirty_days_ago = datetime.now() - timedelta(days=30)
-    site_data = site_data[site_data['DateTime'] >= thirty_days_ago]
-elif 'Year' in site_data.columns and 'Month' in site_data.columns:
-    # Use year/month filtering as fallback - get current month's data
-    current_month = datetime.now().month
-    current_year = datetime.now().year
-    site_data = site_data[(site_data['Year'] == current_year) & (site_data['Month'] == current_month)]
+    recent_data = site_data[site_data['DateTime'] >= thirty_days_ago]
+    if not recent_data.empty:
+        site_data = recent_data
+
 if not site_data.empty and 'risk_level' in site_data.columns:
     current_risk = site_data['risk_level'].mean()
     status, emoji, color = get_water_quality_status(current_risk)
