@@ -1,0 +1,10 @@
+streamlit
+numpy==1.24.4
+catboost==1.2.7
+pandas
+matplotlib
+seaborn
+scikit-learn
+requests
+openpyxl
+plotly
