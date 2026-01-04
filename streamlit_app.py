@@ -704,6 +704,15 @@ else:
         loading_placeholder.empty()
 
 
+# Filter data to only include the selected country's data
+if 'Region' in df.columns:
+    df = df[df['Region'] == selected_country]
+
+# Also filter to only include valid basins for the selected country
+country_basins = get_basins_for_country(selected_country)
+if 'SiteID' in df.columns and country_basins:
+    df = df[df['SiteID'].isin(country_basins)]
+
 if 'risk_level' not in df.columns:
     df['risk_level'] = df.apply(determine_risk_level, axis=1)
 
