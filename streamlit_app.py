@@ -751,7 +751,10 @@ if selected_country == "India":
             s for s in raw_sites 
             if any(k in s for k in REAL_WATER_QUALITY_DATA.keys())
         ]
-        # state_info = INDIA_STATE_BASINS.get(selected_state, {})
+        # Filter the dataframe to only include rivers from the selected state
+        if 'SiteID' in df.columns and raw_sites:
+            df = df[df['SiteID'].isin(raw_sites)]
+        
         if available_sites:
             st.sidebar.caption(f"📍 {len(available_sites)} monitored basins in {selected_state}")
         else:
@@ -768,7 +771,39 @@ filtered_sites = [s for s in available_sites if not (isinstance(s, str) and s.is
 if not filtered_sites:
     filtered_sites = available_sites
 
-site = st.sidebar.selectbox('River/Basin', sorted(filtered_sites))
+# Smart sorting to prioritize major rivers
+def river_sort_key(name):
+    # Prioritize exact matches of major rivers
+    PRIORITY_RIVERS = ["Ganga River", "Yamuna River", "Godavari River", "Krishna River", "Kaveri River", "Narmada River", "Tapi River", "Brahmaputra River"]
+    if name in PRIORITY_RIVERS:
+        return (0, PRIORITY_RIVERS.index(name))
+    # Then prioritize variations of major rivers
+    for i, river in enumerate(PRIORITY_RIVERS):
+        if river in name:
+            return (1, i, name)
+    return (2, name)
+
+sorted_sites = sorted(filtered_sites, key=river_sort_key)
+
+# Persistence logic
+if 'last_selected_site' not in st.session_state:
+    st.session_state.last_selected_site = sorted_sites[0] if sorted_sites else None
+
+# Determine default index
+default_index = 0
+if st.session_state.last_selected_site in sorted_sites:
+    default_index = sorted_sites.index(st.session_state.last_selected_site)
+
+def on_site_change():
+    st.session_state.last_selected_site = st.session_state.river_selector
+
+site = st.sidebar.selectbox(
+    'River/Basin', 
+    sorted_sites, 
+    index=default_index,
+    key='river_selector',
+    on_change=on_site_change
+)
 
 
 

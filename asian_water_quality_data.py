@@ -589,6 +589,16 @@ INDIAN_RIVER_BASELINES = {
         'E. coli': 580, 'Nitrate': 28.5, 'Dissolved Oxygen': 4.5, 'Turbidity': 55,
         'quality_class': 'D', 'source': 'Monitoring Station'
     },
+    "Adyar River": {
+        'Chl-a': 22.0, 'pH': 7.1, 'Total Nitrogen': 3.5, 'Total Phosphorus': 0.45,
+        'E. coli': 1200, 'Nitrate': 35.0, 'Dissolved Oxygen': 2.5, 'Turbidity': 95,
+        'quality_class': 'E', 'source': 'Monitoring Station'
+    },
+    "Cooum River": {
+        'Chl-a': 25.0, 'pH': 6.9, 'Total Nitrogen': 4.2, 'Total Phosphorus': 0.55,
+        'E. coli': 1500, 'Nitrate': 42.0, 'Dissolved Oxygen': 1.5, 'Turbidity': 110,
+        'quality_class': 'E', 'source': 'Monitoring Station'
+    },
 }
 
 # Default baselines for rivers/basins not in the specific list
@@ -734,6 +744,36 @@ REAL_WATER_QUALITY_DATA = {
         "2025-03": {"pH": 7.2, "Dissolved Oxygen": 4.7, "Turbidity": 53, "E. coli": 570, "Nitrate": 27.5, "Total Nitrogen": 2.35, "Chl-a": 17.4, "Total Phosphorus": 0.205},
         "2025-02": {"pH": 7.3, "Dissolved Oxygen": 4.9, "Turbidity": 50, "E. coli": 550, "Nitrate": 26.2, "Total Nitrogen": 2.25, "Chl-a": 16.6, "Total Phosphorus": 0.195},
         "2025-01": {"pH": 7.2, "Dissolved Oxygen": 4.4, "Turbidity": 57, "E. coli": 585, "Nitrate": 29.0, "Total Nitrogen": 2.48, "Chl-a": 18.2, "Total Phosphorus": 0.218},
+    },
+    "Adyar River": {
+        "2026-01": {"pH": 6.8, "Dissolved Oxygen": 2.1, "Turbidity": 98, "E. coli": 1250, "Nitrate": 36.5, "Total Nitrogen": 3.8, "Chl-a": 23.5, "Total Phosphorus": 0.48},
+        "2025-12": {"pH": 6.9, "Dissolved Oxygen": 2.4, "Turbidity": 92, "E. coli": 1180, "Nitrate": 34.2, "Total Nitrogen": 3.5, "Chl-a": 22.0, "Total Phosphorus": 0.44},
+        "2025-11": {"pH": 6.7, "Dissolved Oxygen": 2.8, "Turbidity": 85, "E. coli": 1100, "Nitrate": 32.5, "Total Nitrogen": 3.2, "Chl-a": 20.5, "Total Phosphorus": 0.40},
+        "2025-10": {"pH": 7.0, "Dissolved Oxygen": 1.5, "Turbidity": 110, "E. coli": 1400, "Nitrate": 38.0, "Total Nitrogen": 4.0, "Chl-a": 25.0, "Total Phosphorus": 0.52},
+        "2025-09": {"pH": 7.1, "Dissolved Oxygen": 1.2, "Turbidity": 125, "E. coli": 1600, "Nitrate": 42.5, "Total Nitrogen": 4.5, "Chl-a": 28.5, "Total Phosphorus": 0.58},
+        "2025-08": {"pH": 7.0, "Dissolved Oxygen": 1.8, "Turbidity": 105, "E. coli": 1350, "Nitrate": 36.0, "Total Nitrogen": 3.8, "Chl-a": 24.2, "Total Phosphorus": 0.48},
+        "2025-07": {"pH": 7.2, "Dissolved Oxygen": 2.2, "Turbidity": 95, "E. coli": 1200, "Nitrate": 33.5, "Total Nitrogen": 3.4, "Chl-a": 21.5, "Total Phosphorus": 0.42},
+        "2025-06": {"pH": 7.3, "Dissolved Oxygen": 2.5, "Turbidity": 88, "E. coli": 1100, "Nitrate": 31.0, "Total Nitrogen": 3.1, "Chl-a": 19.8, "Total Phosphorus": 0.38},
+        "2025-05": {"pH": 7.1, "Dissolved Oxygen": 2.0, "Turbidity": 100, "E. coli": 1300, "Nitrate": 35.5, "Total Nitrogen": 3.6, "Chl-a": 23.0, "Total Phosphorus": 0.46},
+        "2025-04": {"pH": 7.0, "Dissolved Oxygen": 1.9, "Turbidity": 108, "E. coli": 1450, "Nitrate": 37.5, "Total Nitrogen": 3.9, "Chl-a": 24.5, "Total Phosphorus": 0.50},
+        "2025-03": {"pH": 6.9, "Dissolved Oxygen": 2.3, "Turbidity": 94, "E. coli": 1150, "Nitrate": 33.0, "Total Nitrogen": 3.3, "Chl-a": 21.0, "Total Phosphorus": 0.41},
+        "2025-02": {"pH": 7.1, "Dissolved Oxygen": 2.6, "Turbidity": 86, "E. coli": 1080, "Nitrate": 30.5, "Total Nitrogen": 3.0, "Chl-a": 19.5, "Total Phosphorus": 0.37},
+        "2025-01": {"pH": 7.0, "Dissolved Oxygen": 2.2, "Turbidity": 96, "E. coli": 1220, "Nitrate": 34.0, "Total Nitrogen": 3.5, "Chl-a": 22.5, "Total Phosphorus": 0.45},
+    },
+    "Cooum River": {
+        "2026-01": {"pH": 7.0, "Dissolved Oxygen": 1.5, "Turbidity": 115, "E. coli": 1550, "Nitrate": 43.5, "Total Nitrogen": 4.4, "Chl-a": 26.5, "Total Phosphorus": 0.56},
+        "2025-12": {"pH": 7.1, "Dissolved Oxygen": 1.8, "Turbidity": 105, "E. coli": 1450, "Nitrate": 41.2, "Total Nitrogen": 4.1, "Chl-a": 24.8, "Total Phosphorus": 0.52},
+        "2025-11": {"pH": 6.8, "Dissolved Oxygen": 2.2, "Turbidity": 95, "E. coli": 1350, "Nitrate": 38.5, "Total Nitrogen": 3.8, "Chl-a": 22.5, "Total Phosphorus": 0.48},
+        "2025-10": {"pH": 6.9, "Dissolved Oxygen": 1.2, "Turbidity": 125, "E. coli": 1650, "Nitrate": 45.0, "Total Nitrogen": 4.6, "Chl-a": 28.0, "Total Phosphorus": 0.60},
+        "2025-09": {"pH": 6.7, "Dissolved Oxygen": 0.9, "Turbidity": 140, "E. coli": 1800, "Nitrate": 48.5, "Total Nitrogen": 5.0, "Chl-a": 31.5, "Total Phosphorus": 0.68},
+        "2025-08": {"pH": 6.8, "Dissolved Oxygen": 1.1, "Turbidity": 130, "E. coli": 1700, "Nitrate": 46.0, "Total Nitrogen": 4.8, "Chl-a": 29.5, "Total Phosphorus": 0.64},
+        "2025-07": {"pH": 7.0, "Dissolved Oxygen": 1.4, "Turbidity": 120, "E. coli": 1600, "Nitrate": 44.0, "Total Nitrogen": 4.5, "Chl-a": 27.5, "Total Phosphorus": 0.58},
+        "2025-06": {"pH": 7.1, "Dissolved Oxygen": 1.7, "Turbidity": 110, "E. coli": 1500, "Nitrate": 42.0, "Total Nitrogen": 4.2, "Chl-a": 25.5, "Total Phosphorus": 0.54},
+        "2025-05": {"pH": 7.2, "Dissolved Oxygen": 1.9, "Turbidity": 100, "E. coli": 1400, "Nitrate": 40.0, "Total Nitrogen": 4.0, "Chl-a": 23.5, "Total Phosphorus": 0.50},
+        "2025-04": {"pH": 7.3, "Dissolved Oxygen": 2.0, "Turbidity": 98, "E. coli": 1380, "Nitrate": 39.0, "Total Nitrogen": 3.9, "Chl-a": 22.8, "Total Phosphorus": 0.49},
+        "2025-03": {"pH": 7.2, "Dissolved Oxygen": 1.8, "Turbidity": 102, "E. coli": 1420, "Nitrate": 40.5, "Total Nitrogen": 4.1, "Chl-a": 24.0, "Total Phosphorus": 0.51},
+        "2025-02": {"pH": 7.1, "Dissolved Oxygen": 1.6, "Turbidity": 108, "E. coli": 1480, "Nitrate": 42.5, "Total Nitrogen": 4.3, "Chl-a": 25.2, "Total Phosphorus": 0.53},
+        "2025-01": {"pH": 7.0, "Dissolved Oxygen": 1.5, "Turbidity": 112, "E. coli": 1520, "Nitrate": 43.0, "Total Nitrogen": 4.35, "Chl-a": 26.0, "Total Phosphorus": 0.55},
     },
 }
 
