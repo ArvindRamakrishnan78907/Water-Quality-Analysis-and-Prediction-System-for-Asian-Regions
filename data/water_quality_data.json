@@ -1,0 +1,524 @@
+{
+    "Ganga River": {
+        "baseline": {
+            "Chl-a": 12.5,
+            "pH": 7.8,
+            "Total Nitrogen": 1.8,
+            "Total Phosphorus": 0.15,
+            "E. coli": 380,
+            "Nitrate": 18.5,
+            "Dissolved Oxygen": 6.2,
+            "Turbidity": 45,
+            "quality_class": "C",
+            "source": "Monitoring Station"
+        },
+        "monthly": {
+            "2026-01": {
+                "pH": 7.9,
+                "Dissolved Oxygen": 6.1,
+                "Turbidity": 48,
+                "E. coli": 395,
+                "Nitrate": 19.2,
+                "Total Nitrogen": 1.9,
+                "Chl-a": 12.5,
+                "Total Phosphorus": 0.15
+            },
+            "2025-12": {
+                "pH": 7.8,
+                "Dissolved Oxygen": 6.3,
+                "Turbidity": 42,
+                "E. coli": 410,
+                "Nitrate": 18.8,
+                "Total Nitrogen": 1.85,
+                "Chl-a": 12.2,
+                "Total Phosphorus": 0.14
+            },
+            "2025-11": {
+                "pH": 7.7,
+                "Dissolved Oxygen": 6.5,
+                "Turbidity": 38,
+                "E. coli": 365,
+                "Nitrate": 17.5,
+                "Total Nitrogen": 1.7,
+                "Chl-a": 11.8,
+                "Total Phosphorus": 0.13
+            },
+            "2025-10": {
+                "pH": 7.6,
+                "Dissolved Oxygen": 6.8,
+                "Turbidity": 35,
+                "E. coli": 340,
+                "Nitrate": 16.8,
+                "Total Nitrogen": 1.65,
+                "Chl-a": 11.5,
+                "Total Phosphorus": 0.12
+            },
+            "2025-09": {
+                "pH": 7.5,
+                "Dissolved Oxygen": 6.4,
+                "Turbidity": 52,
+                "E. coli": 420,
+                "Nitrate": 19.5,
+                "Total Nitrogen": 1.9,
+                "Chl-a": 13.2,
+                "Total Phosphorus": 0.16
+            },
+            "2025-08": {
+                "pH": 7.4,
+                "Dissolved Oxygen": 5.8,
+                "Turbidity": 65,
+                "E. coli": 480,
+                "Nitrate": 21.2,
+                "Total Nitrogen": 2.1,
+                "Chl-a": 14.5,
+                "Total Phosphorus": 0.18
+            },
+            "2025-07": {
+                "pH": 7.3,
+                "Dissolved Oxygen": 5.5,
+                "Turbidity": 72,
+                "E. coli": 520,
+                "Nitrate": 22.5,
+                "Total Nitrogen": 2.2,
+                "Chl-a": 15.2,
+                "Total Phosphorus": 0.19
+            },
+            "2025-06": {
+                "pH": 7.5,
+                "Dissolved Oxygen": 5.9,
+                "Turbidity": 58,
+                "E. coli": 450,
+                "Nitrate": 20.1,
+                "Total Nitrogen": 2.0,
+                "Chl-a": 13.8,
+                "Total Phosphorus": 0.17
+            },
+            "2025-05": {
+                "pH": 7.6,
+                "Dissolved Oxygen": 6.2,
+                "Turbidity": 45,
+                "E. coli": 380,
+                "Nitrate": 18.2,
+                "Total Nitrogen": 1.8,
+                "Chl-a": 12.8,
+                "Total Phosphorus": 0.15
+            },
+            "2025-04": {
+                "pH": 7.7,
+                "Dissolved Oxygen": 6.4,
+                "Turbidity": 40,
+                "E. coli": 350,
+                "Nitrate": 17.0,
+                "Total Nitrogen": 1.7,
+                "Chl-a": 12.2,
+                "Total Phosphorus": 0.14
+            },
+            "2025-03": {
+                "pH": 7.8,
+                "Dissolved Oxygen": 6.6,
+                "Turbidity": 38,
+                "E. coli": 330,
+                "Nitrate": 16.5,
+                "Total Nitrogen": 1.65,
+                "Chl-a": 11.8,
+                "Total Phosphorus": 0.13
+            },
+            "2025-02": {
+                "pH": 7.9,
+                "Dissolved Oxygen": 6.8,
+                "Turbidity": 35,
+                "E. coli": 310,
+                "Nitrate": 15.8,
+                "Total Nitrogen": 1.6,
+                "Chl-a": 11.2,
+                "Total Phosphorus": 0.12
+            },
+            "2025-01": {
+                "pH": 7.8,
+                "Dissolved Oxygen": 6.5,
+                "Turbidity": 40,
+                "E. coli": 360,
+                "Nitrate": 17.2,
+                "Total Nitrogen": 1.72,
+                "Chl-a": 12.0,
+                "Total Phosphorus": 0.14
+            }
+        }
+    },
+    "Yamuna River": {
+        "baseline": {
+            "Chl-a": 28.5,
+            "pH": 7.4,
+            "Total Nitrogen": 3.2,
+            "Total Phosphorus": 0.28,
+            "E. coli": 890,
+            "Nitrate": 32.0,
+            "Dissolved Oxygen": 3.8,
+            "Turbidity": 68,
+            "quality_class": "D",
+            "source": "Monitoring Station"
+        },
+        "monthly": {
+            "2026-01": {
+                "pH": 7.3,
+                "Dissolved Oxygen": 3.2,
+                "Turbidity": 72,
+                "E. coli": 920,
+                "Nitrate": 34.5,
+                "Total Nitrogen": 3.4,
+                "Chl-a": 28.5,
+                "Total Phosphorus": 0.28
+            },
+            "2025-12": {
+                "pH": 7.4,
+                "Dissolved Oxygen": 3.5,
+                "Turbidity": 68,
+                "E. coli": 880,
+                "Nitrate": 32.1,
+                "Total Nitrogen": 3.2,
+                "Chl-a": 27.2,
+                "Total Phosphorus": 0.26
+            },
+            "2025-11": {
+                "pH": 7.2,
+                "Dissolved Oxygen": 3.8,
+                "Turbidity": 65,
+                "E. coli": 850,
+                "Nitrate": 30.8,
+                "Total Nitrogen": 3.1,
+                "Chl-a": 26.5,
+                "Total Phosphorus": 0.25
+            },
+            "2025-10": {
+                "pH": 7.3,
+                "Dissolved Oxygen": 4.0,
+                "Turbidity": 62,
+                "E. coli": 820,
+                "Nitrate": 29.5,
+                "Total Nitrogen": 3.0,
+                "Chl-a": 25.8,
+                "Total Phosphorus": 0.24
+            },
+            "2025-09": {
+                "pH": 7.1,
+                "Dissolved Oxygen": 3.2,
+                "Turbidity": 78,
+                "E. coli": 980,
+                "Nitrate": 36.2,
+                "Total Nitrogen": 3.6,
+                "Chl-a": 30.2,
+                "Total Phosphorus": 0.30
+            },
+            "2025-08": {
+                "pH": 7.0,
+                "Dissolved Oxygen": 2.8,
+                "Turbidity": 85,
+                "E. coli": 1050,
+                "Nitrate": 38.5,
+                "Total Nitrogen": 3.8,
+                "Chl-a": 32.5,
+                "Total Phosphorus": 0.32
+            },
+            "2025-07": {
+                "pH": 6.9,
+                "Dissolved Oxygen": 2.5,
+                "Turbidity": 92,
+                "E. coli": 1100,
+                "Nitrate": 40.2,
+                "Total Nitrogen": 4.0,
+                "Chl-a": 34.8,
+                "Total Phosphorus": 0.35
+            },
+            "2025-06": {
+                "pH": 7.1,
+                "Dissolved Oxygen": 3.0,
+                "Turbidity": 80,
+                "E. coli": 1000,
+                "Nitrate": 37.0,
+                "Total Nitrogen": 3.7,
+                "Chl-a": 31.5,
+                "Total Phosphorus": 0.31
+            }
+        }
+    },
+    "Brahmaputra River": {
+        "baseline": {
+            "Chl-a": 5.2,
+            "pH": 7.2,
+            "Total Nitrogen": 0.45,
+            "Total Phosphorus": 0.04,
+            "E. coli": 120,
+            "Nitrate": 8.5,
+            "Dissolved Oxygen": 7.8,
+            "Turbidity": 85,
+            "quality_class": "B",
+            "source": "Monitoring Station"
+        },
+        "monthly": {
+            "2026-01": {
+                "pH": 7.1,
+                "Dissolved Oxygen": 7.9,
+                "Turbidity": 92,
+                "E. coli": 115,
+                "Nitrate": 8.2,
+                "Total Nitrogen": 0.4,
+                "Chl-a": 5.2,
+                "Total Phosphorus": 0.04
+            },
+            "2025-12": {
+                "pH": 7.2,
+                "Dissolved Oxygen": 7.8,
+                "Turbidity": 88,
+                "E. coli": 125,
+                "Nitrate": 8.5,
+                "Total Nitrogen": 0.45,
+                "Chl-a": 5.5,
+                "Total Phosphorus": 0.045
+            },
+            "2025-11": {
+                "pH": 7.0,
+                "Dissolved Oxygen": 8.1,
+                "Turbidity": 85,
+                "E. coli": 108,
+                "Nitrate": 7.9,
+                "Total Nitrogen": 0.38,
+                "Chl-a": 4.9,
+                "Total Phosphorus": 0.038
+            },
+            "2025-10": {
+                "pH": 7.1,
+                "Dissolved Oxygen": 8.2,
+                "Turbidity": 82,
+                "E. coli": 100,
+                "Nitrate": 7.5,
+                "Total Nitrogen": 0.35,
+                "Chl-a": 4.6,
+                "Total Phosphorus": 0.035
+            }
+        }
+    },
+    "Godavari River": {
+        "baseline": {
+            "Chl-a": 8.5,
+            "pH": 7.6,
+            "Total Nitrogen": 0.92,
+            "Total Phosphorus": 0.08,
+            "E. coli": 210,
+            "Nitrate": 12.0,
+            "Dissolved Oxygen": 6.8,
+            "Turbidity": 32,
+            "quality_class": "B",
+            "source": "Monitoring Station"
+        },
+        "monthly": {
+            "2026-01": {
+                "pH": 7.5,
+                "Dissolved Oxygen": 6.9,
+                "Turbidity": 35,
+                "E. coli": 205,
+                "Nitrate": 11.8,
+                "Total Nitrogen": 0.9,
+                "Chl-a": 8.5,
+                "Total Phosphorus": 0.08
+            },
+            "2025-12": {
+                "pH": 7.6,
+                "Dissolved Oxygen": 6.8,
+                "Turbidity": 32,
+                "E. coli": 215,
+                "Nitrate": 12.2,
+                "Total Nitrogen": 0.92,
+                "Chl-a": 8.8,
+                "Total Phosphorus": 0.085
+            }
+        }
+    },
+    "Krishna River": {
+        "baseline": {
+            "Chl-a": 9.2,
+            "pH": 7.5,
+            "Total Nitrogen": 1.1,
+            "Total Phosphorus": 0.11,
+            "E. coli": 280,
+            "Nitrate": 14.5,
+            "Dissolved Oxygen": 6.4,
+            "Turbidity": 28,
+            "quality_class": "C",
+            "source": "Monitoring Station"
+        },
+        "monthly": {
+            "2026-01": {
+                "pH": 7.6,
+                "Dissolved Oxygen": 6.5,
+                "Turbidity": 28,
+                "E. coli": 285,
+                "Nitrate": 14.8,
+                "Total Nitrogen": 1.15,
+                "Chl-a": 9.2,
+                "Total Phosphorus": 0.11
+            }
+        }
+    },
+    "Narmada River": {
+        "baseline": {
+            "Chl-a": 4.8,
+            "pH": 7.8,
+            "Total Nitrogen": 0.38,
+            "Total Phosphorus": 0.03,
+            "E. coli": 85,
+            "Nitrate": 6.2,
+            "Dissolved Oxygen": 7.5,
+            "Turbidity": 18,
+            "quality_class": "A",
+            "source": "Monitoring Station"
+        },
+        "monthly": {
+            "2026-01": {
+                "pH": 7.9,
+                "Dissolved Oxygen": 7.6,
+                "Turbidity": 18,
+                "E. coli": 82,
+                "Nitrate": 6.0,
+                "Total Nitrogen": 0.36,
+                "Chl-a": 4.8,
+                "Total Phosphorus": 0.03
+            }
+        }
+    },
+    "Kaveri River": {
+        "baseline": {
+            "Chl-a": 6.5,
+            "pH": 7.3,
+            "Total Nitrogen": 0.72,
+            "Total Phosphorus": 0.06,
+            "E. coli": 165,
+            "Nitrate": 9.8,
+            "Dissolved Oxygen": 7.1,
+            "Turbidity": 22,
+            "quality_class": "B",
+            "source": "Monitoring Station"
+        },
+        "monthly": {
+            "2026-01": {
+                "pH": 7.4,
+                "Dissolved Oxygen": 7.2,
+                "Turbidity": 22,
+                "E. coli": 162,
+                "Nitrate": 9.5,
+                "Total Nitrogen": 0.7,
+                "Chl-a": 6.5,
+                "Total Phosphorus": 0.06
+            }
+        }
+    },
+    "Sabarmati River": {
+        "baseline": {
+            "Chl-a": 18.5,
+            "pH": 7.2,
+            "Total Nitrogen": 2.4,
+            "Total Phosphorus": 0.22,
+            "E. coli": 580,
+            "Nitrate": 28.5,
+            "Dissolved Oxygen": 4.5,
+            "Turbidity": 55,
+            "quality_class": "D",
+            "source": "Monitoring Station"
+        },
+        "monthly": {
+            "2026-01": {
+                "pH": 7.1,
+                "Dissolved Oxygen": 4.2,
+                "Turbidity": 58,
+                "E. coli": 595,
+                "Nitrate": 29.5,
+                "Total Nitrogen": 2.5,
+                "Chl-a": 18.5,
+                "Total Phosphorus": 0.22
+            }
+        }
+    },
+    "Chambal River": {
+        "baseline": {
+            "Chl-a": 3.5,
+            "pH": 7.9,
+            "Total Nitrogen": 0.28,
+            "Total Phosphorus": 0.02,
+            "E. coli": 45,
+            "Nitrate": 4.5,
+            "Dissolved Oxygen": 8.2,
+            "Turbidity": 12,
+            "quality_class": "A",
+            "source": "Monitoring Station"
+        }
+    },
+    "Tapi River": {
+        "baseline": {
+            "Chl-a": 7.2,
+            "pH": 7.4,
+            "Total Nitrogen": 0.85,
+            "Total Phosphorus": 0.07,
+            "E. coli": 195,
+            "Nitrate": 10.5,
+            "Dissolved Oxygen": 6.9,
+            "Turbidity": 25,
+            "quality_class": "B",
+            "source": "Monitoring Station"
+        }
+    },
+    "Mahanadi River": {
+        "baseline": {
+            "Chl-a": 7.8,
+            "pH": 7.5,
+            "Total Nitrogen": 0.88,
+            "Total Phosphorus": 0.08,
+            "E. coli": 220,
+            "Nitrate": 11.2,
+            "Dissolved Oxygen": 6.6,
+            "Turbidity": 35,
+            "quality_class": "B",
+            "source": "Monitoring Station"
+        }
+    },
+    "Sutlej River": {
+        "baseline": {
+            "Chl-a": 11.5,
+            "pH": 7.6,
+            "Total Nitrogen": 1.5,
+            "Total Phosphorus": 0.12,
+            "E. coli": 320,
+            "Nitrate": 16.8,
+            "Dissolved Oxygen": 5.8,
+            "Turbidity": 42,
+            "quality_class": "C",
+            "source": "Monitoring Station"
+        }
+    },
+    "Adyar River": {
+        "baseline": {
+            "Chl-a": 22.0,
+            "pH": 7.1,
+            "Total Nitrogen": 3.5,
+            "Total Phosphorus": 0.45,
+            "E. coli": 1200,
+            "Nitrate": 35.0,
+            "Dissolved Oxygen": 2.5,
+            "Turbidity": 95,
+            "quality_class": "E",
+            "source": "Monitoring Station"
+        }
+    },
+    "Cooum River": {
+        "baseline": {
+            "Chl-a": 25.0,
+            "pH": 6.9,
+            "Total Nitrogen": 4.2,
+            "Total Phosphorus": 0.55,
+            "E. coli": 1500,
+            "Nitrate": 42.0,
+            "Dissolved Oxygen": 1.5,
+            "Turbidity": 110,
+            "quality_class": "E",
+            "source": "Monitoring Station"
+        }
+    }
+}

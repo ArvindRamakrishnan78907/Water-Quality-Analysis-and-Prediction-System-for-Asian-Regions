@@ -1,0 +1,457 @@
+{
+    "Afghanistan": [
+        "Amu Darya Basin",
+        "Helmand Basin",
+        "Kabul River Basin",
+        "Hari River Basin",
+        "Panjshir Basin",
+        "Arghandab Basin"
+    ],
+    "Armenia": [
+        "Araks River Basin",
+        "Hrazdan River Basin",
+        "Vorotan Basin",
+        "Lake Sevan Basin",
+        "Debed River Basin"
+    ],
+    "Azerbaijan": [
+        "Kura River Basin",
+        "Araks River Basin",
+        "Samur Basin",
+        "Mingachevir Reservoir Basin",
+        "Caspian Shore Basin"
+    ],
+    "Bahrain": [
+        "Northern Aquifer Basin",
+        "Central Basin",
+        "Dammam Aquifer",
+        "Coastal Water Zone"
+    ],
+    "Bangladesh": [
+        "Ganges-Padma Basin",
+        "Brahmaputra-Jamuna Basin",
+        "Meghna Basin",
+        "Karnaphuli Basin",
+        "Surma-Kushiyara Basin",
+        "Teesta Basin"
+    ],
+    "Bhutan": [
+        "Manas River Basin",
+        "Paro Chhu Basin",
+        "Wang Chhu Basin",
+        "Punatsang Chhu Basin",
+        "Drangme Chhu Basin"
+    ],
+    "Brunei": [
+        "Belait River Basin",
+        "Tutong River Basin",
+        "Brunei River Basin",
+        "Temburong Basin"
+    ],
+    "Cambodia": [
+        "Mekong Basin",
+        "Tonle Sap Basin",
+        "Bassac River Basin",
+        "Stung Sen Basin",
+        "Srepok River Basin",
+        "Sesan Basin"
+    ],
+    "China": [
+        "Yangtze River Basin",
+        "Yellow River Basin",
+        "Pearl River Basin",
+        "Heilongjiang Basin",
+        "Huai River Basin",
+        "Hai River Basin",
+        "Liao River Basin",
+        "Songhua River Basin",
+        "Taihu Lake Basin",
+        "Min River Basin",
+        "Han River Basin",
+        "Gan River Basin"
+    ],
+    "Cyprus": [
+        "Kouris Basin",
+        "Yermasoyia Basin",
+        "Ezousas Basin",
+        "Limnatis Basin",
+        "Serrachis Basin"
+    ],
+    "Georgia": [
+        "Kura Basin",
+        "Rioni Basin",
+        "Mtkvari Basin",
+        "Enguri Basin",
+        "Iori Basin",
+        "Alazani Basin"
+    ],
+    "Hong Kong": [
+        "Shing Mun River",
+        "Lam Tsuen River",
+        "Shan Pui River",
+        "Yuen Long Creek",
+        "Deep Bay",
+        "Tolo Harbour"
+    ],
+    "India": [
+        "Ganga River",
+        "Yamuna River",
+        "Brahmaputra River",
+        "Godavari River",
+        "Krishna River",
+        "Narmada River",
+        "Tapi River",
+        "Kaveri River",
+        "Mahanadi River",
+        "Chambal River",
+        "Sutlej River",
+        "Beas River",
+        "Chenab River",
+        "Jhelum River",
+        "Ravi River",
+        "Sabarmati River",
+        "Mahi River",
+        "Tungabhadra River",
+        "Bhima River",
+        "Pennar River",
+        "Ganga Basin",
+        "Brahmaputra Basin",
+        "Indus Basin",
+        "Godavari Basin",
+        "Krishna Basin",
+        "Mahanadi Basin",
+        "Narmada Basin",
+        "Tapi Basin",
+        "Cauvery Basin",
+        "Pennar Basin",
+        "Sabarmati Basin",
+        "Mahi Basin",
+        "Subarnarekha Basin",
+        "Baitarani Basin",
+        "Brahmani Basin"
+    ],
+    "Indonesia": [
+        "Citarum Basin",
+        "Mahakam Basin",
+        "Barito Basin",
+        "Kapuas Basin",
+        "Brantas Basin",
+        "Solo River Basin",
+        "Lake Toba Basin",
+        "Musi River Basin",
+        "Bengawan Solo Basin",
+        "Ciliwung Basin"
+    ],
+    "Iran": [
+        "Karun Basin",
+        "Zayandeh Basin",
+        "Karkheh Basin",
+        "Urmia Lake Basin",
+        "Sefidrud Basin",
+        "Kor River Basin",
+        "Dez River Basin",
+        "Gorgan Basin"
+    ],
+    "Iraq": [
+        "Tigris Basin",
+        "Euphrates Basin",
+        "Shatt al-Arab Basin",
+        "Greater Zab Basin",
+        "Lesser Zab Basin",
+        "Diyala Basin",
+        "Tharthar Basin"
+    ],
+    "Israel": [
+        "Jordan River Basin",
+        "Coastal Aquifer Basin",
+        "Mountain Aquifer",
+        "Sea of Galilee Basin",
+        "Yarkon Basin"
+    ],
+    "Japan": [
+        "Tone River Basin",
+        "Shinano River Basin",
+        "Ishikari River Basin",
+        "Kitakami River Basin",
+        "Mogami River Basin",
+        "Agano River Basin",
+        "Lake Biwa Basin",
+        "Yoshino River Basin",
+        "Tenryu Basin",
+        "Kiso River Basin",
+        "Chikugo Basin"
+    ],
+    "Jordan": [
+        "Jordan River Basin",
+        "Yarmouk Basin",
+        "Zarqa River Basin",
+        "Azraq Basin",
+        "Dead Sea Basin",
+        "Wadi Araba Basin"
+    ],
+    "Kazakhstan": [
+        "Irtysh Basin",
+        "Syr Darya Basin",
+        "Ili River Basin",
+        "Ural River Basin",
+        "Lake Balkhash Basin",
+        "Ishim Basin",
+        "Tobol Basin",
+        "Nura Basin",
+        "Chu River Basin"
+    ],
+    "Kuwait": [
+        "Kuwait Bay Basin",
+        "Northern Desert Basin",
+        "Burgan Basin",
+        "Coastal Aquifer Zone"
+    ],
+    "Kyrgyzstan": [
+        "Syr Darya Basin",
+        "Naryn River Basin",
+        "Chu River Basin",
+        "Issyk-Kul Basin",
+        "Talas Basin",
+        "Kara-Darya Basin"
+    ],
+    "Laos": [
+        "Mekong Basin",
+        "Nam Ou Basin",
+        "Nam Ngum Basin",
+        "Sekong Basin",
+        "Nam Khan Basin",
+        "Xe Bang Fai Basin"
+    ],
+    "Lebanon": [
+        "Litani River Basin",
+        "Orontes Basin",
+        "Nahr Ibrahim Basin",
+        "Beirut River Basin",
+        "Awali Basin"
+    ],
+    "Malaysia": [
+        "Pahang River Basin",
+        "Perak River Basin",
+        "Kelantan Basin",
+        "Rajang River Basin",
+        "Kinabatangan Basin",
+        "Klang Basin",
+        "Muda River Basin",
+        "Langat Basin"
+    ],
+    "Maldives": [
+        "Male Atoll Basin",
+        "Addu Atoll Basin",
+        "Ari Atoll Basin",
+        "Huvadhoo Atoll Basin"
+    ],
+    "Mongolia": [
+        "Selenge Basin",
+        "Orkhon Basin",
+        "Tuul Basin",
+        "Kherlen Basin",
+        "Onon Basin",
+        "Lake Khuvsgul Basin"
+    ],
+    "Myanmar": [
+        "Irrawaddy Basin",
+        "Salween Basin",
+        "Sittaung Basin",
+        "Chindwin Basin",
+        "Inle Lake Basin",
+        "Kaladan Basin",
+        "Thanlwin Basin"
+    ],
+    "Nepal": [
+        "Koshi Basin",
+        "Gandaki Basin",
+        "Karnali Basin",
+        "Mahakali Basin",
+        "Bagmati Basin",
+        "Narayani Basin",
+        "Rapti Basin",
+        "Kankai Basin"
+    ],
+    "North Korea": [
+        "Yalu River Basin",
+        "Tumen River Basin",
+        "Taedong Basin",
+        "Chongchon Basin",
+        "Imjin Basin"
+    ],
+    "Oman": [
+        "Wadi Samail Basin",
+        "Batinah Coastal Basin",
+        "Dhofar Basin",
+        "Sharqiyah Basin",
+        "Wadi Dayqah Basin"
+    ],
+    "Pakistan": [
+        "Indus Basin",
+        "Jhelum Basin",
+        "Chenab Basin",
+        "Ravi Basin",
+        "Sutlej Basin",
+        "Kabul River Basin",
+        "Swat Basin",
+        "Hub River Basin",
+        "Lyari Basin"
+    ],
+    "Palestine": [
+        "Jordan Valley Basin",
+        "Mountain Aquifer Basin",
+        "Coastal Aquifer",
+        "Wadi Gaza Basin"
+    ],
+    "Philippines": [
+        "Cagayan River Basin",
+        "Pampanga River Basin",
+        "Agno River Basin",
+        "Pasig-Laguna Basin",
+        "Mindanao River Basin",
+        "Agusan Basin",
+        "Rio Grande de Mindanao Basin"
+    ],
+    "Qatar": [
+        "Northern Basin",
+        "Southern Basin",
+        "Doha Bay Basin",
+        "Dukhan Basin"
+    ],
+    "Russia": [
+        "Amur Basin",
+        "Lena Basin",
+        "Yenisei Basin",
+        "Ob Basin",
+        "Volga Basin",
+        "Lake Baikal Basin",
+        "Angara Basin"
+    ],
+    "Saudi Arabia": [
+        "Wadi Hanifa Basin",
+        "Wadi Fatima Basin",
+        "Wadi Rimah Basin",
+        "Wadi Dawasir Basin",
+        "Wadi Najran Basin",
+        "Tabuk Basin",
+        "Saq Aquifer Basin"
+    ],
+    "Singapore": [
+        "Central Catchment Basin",
+        "Marina Basin",
+        "Kranji Basin",
+        "Punggol Basin",
+        "Serangoon Basin"
+    ],
+    "South Korea": [
+        "Han River Basin",
+        "Nakdong River Basin",
+        "Geum River Basin",
+        "Yeongsan River Basin",
+        "Seomjin River Basin",
+        "Anseong Basin",
+        "Sapgyo Basin"
+    ],
+    "Sri Lanka": [
+        "Mahaweli Basin",
+        "Kelani Basin",
+        "Kalu Ganga Basin",
+        "Walawe Basin",
+        "Gin Ganga Basin",
+        "Deduru Oya Basin"
+    ],
+    "Syria": [
+        "Euphrates Basin",
+        "Orontes Basin",
+        "Barada Basin",
+        "Khabur Basin",
+        "Yarmouk Basin",
+        "Coastal Basin"
+    ],
+    "Taiwan": [
+        "Zhuoshui Basin",
+        "Gaoping Basin",
+        "Tamsui Basin",
+        "Lanyang Basin",
+        "Dajia Basin",
+        "Wu River Basin"
+    ],
+    "Tajikistan": [
+        "Amu Darya Basin",
+        "Syr Darya Basin",
+        "Vakhsh Basin",
+        "Zeravshan Basin",
+        "Panj Basin",
+        "Kofarnihon Basin"
+    ],
+    "Thailand": [
+        "Chao Phraya Basin",
+        "Mekong Basin",
+        "Mae Klong Basin",
+        "Ping River Basin",
+        "Nan River Basin",
+        "Chi River Basin",
+        "Mun River Basin",
+        "Tha Chin Basin",
+        "Bang Pakong Basin"
+    ],
+    "Timor-Leste": [
+        "Laclo River Basin",
+        "Loes River Basin",
+        "Comoro Basin",
+        "Tukola Basin",
+        "Seical Basin"
+    ],
+    "Turkey": [
+        "Euphrates-Tigris Basin",
+        "Kizilirmak Basin",
+        "Yesilirmak Basin",
+        "Sakarya Basin",
+        "Buyuk Menderes Basin",
+        "Seyhan Basin",
+        "Ceyhan Basin",
+        "Firat Basin",
+        "Marmara Basin"
+    ],
+    "Turkmenistan": [
+        "Amu Darya Basin",
+        "Karakum Canal Basin",
+        "Murgab Basin",
+        "Tejen Basin",
+        "Atrek Basin"
+    ],
+    "United Arab Emirates": [
+        "Dubai Creek Basin",
+        "Al Ain Oasis Basin",
+        "Liwa Basin",
+        "Ras Al Khaimah Basin",
+        "Fujairah Coastal Basin"
+    ],
+    "Uzbekistan": [
+        "Amu Darya Basin",
+        "Syr Darya Basin",
+        "Zeravshan Basin",
+        "Fergana Valley Basin",
+        "Aral Sea Basin",
+        "Chirchik Basin"
+    ],
+    "Vietnam": [
+        "Mekong Delta Basin",
+        "Red River Basin",
+        "Dong Nai Basin",
+        "Ma River Basin",
+        "Ca River Basin",
+        "Saigon River Basin",
+        "Thu Bon Basin",
+        "Huong River Basin",
+        "Vu Gia Basin"
+    ],
+    "Yemen": [
+        "Wadi Hadramaut Basin",
+        "Sana'a Basin",
+        "Wadi Zabid Basin",
+        "Tihama Basin",
+        "Marib Basin",
+        "Wadi Bana Basin"
+    ]
+}

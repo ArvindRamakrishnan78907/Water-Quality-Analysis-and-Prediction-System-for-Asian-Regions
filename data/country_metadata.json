@@ -1,0 +1,512 @@
+{
+    "Afghanistan": {
+        "capital": "Kabul",
+        "population": 41128771,
+        "flag": "🇦🇫",
+        "country_code": "AFG",
+        "coords": [
+            33.9391,
+            67.7100
+        ]
+    },
+    "Armenia": {
+        "capital": "Yerevan",
+        "population": 2963900,
+        "flag": "🇦🇲",
+        "country_code": "ARM",
+        "coords": [
+            40.0691,
+            45.0382
+        ]
+    },
+    "Azerbaijan": {
+        "capital": "Baku",
+        "population": 10145200,
+        "flag": "🇦🇿",
+        "country_code": "AZE",
+        "coords": [
+            40.1431,
+            47.5769
+        ]
+    },
+    "Bahrain": {
+        "capital": "Manama",
+        "population": 1501635,
+        "flag": "🇧🇭",
+        "country_code": "BHR",
+        "coords": [
+            26.0667,
+            50.5577
+        ]
+    },
+    "Bangladesh": {
+        "capital": "Dhaka",
+        "population": 169356251,
+        "flag": "🇧🇩",
+        "country_code": "BGD",
+        "coords": [
+            23.6850,
+            90.3563
+        ]
+    },
+    "Bhutan": {
+        "capital": "Thimphu",
+        "population": 777486,
+        "flag": "🇧🇹",
+        "country_code": "BTN",
+        "coords": [
+            27.5142,
+            90.4336
+        ]
+    },
+    "Brunei": {
+        "capital": "Bandar Seri Begawan",
+        "population": 449002,
+        "flag": "🇧🇳",
+        "country_code": "BRN",
+        "coords": [
+            4.5353,
+            114.7277
+        ]
+    },
+    "Cambodia": {
+        "capital": "Phnom Penh",
+        "population": 16589023,
+        "flag": "🇰🇭",
+        "country_code": "KHM",
+        "coords": [
+            12.5657,
+            104.9910
+        ]
+    },
+    "China": {
+        "capital": "Beijing",
+        "population": 1411750000,
+        "flag": "🇨🇳",
+        "country_code": "CHN",
+        "coords": [
+            35.8617,
+            104.1954
+        ]
+    },
+    "Cyprus": {
+        "capital": "Nicosia",
+        "population": 1244188,
+        "flag": "🇨🇾",
+        "country_code": "CYP",
+        "coords": [
+            35.1264,
+            33.4299
+        ]
+    },
+    "Georgia": {
+        "capital": "Tbilisi",
+        "population": 3728573,
+        "flag": "🇬🇪",
+        "country_code": "GEO",
+        "coords": [
+            42.3154,
+            43.3569
+        ]
+    },
+    "Hong Kong": {
+        "capital": "Hong Kong",
+        "population": 7413100,
+        "flag": "🇭🇰",
+        "country_code": "HKG",
+        "coords": [
+            22.3193,
+            114.1694
+        ]
+    },
+    "India": {
+        "capital": "New Delhi",
+        "population": 1428627663,
+        "flag": "🇮🇳",
+        "country_code": "IND",
+        "coords": [
+            20.5937,
+            78.9629
+        ]
+    },
+    "Indonesia": {
+        "capital": "Jakarta",
+        "population": 277534122,
+        "flag": "🇮🇩",
+        "country_code": "IDN",
+        "coords": [
+            -0.7893,
+            113.9213
+        ]
+    },
+    "Iran": {
+        "capital": "Tehran",
+        "population": 87590873,
+        "flag": "🇮🇷",
+        "country_code": "IRN",
+        "coords": [
+            32.4279,
+            53.6880
+        ]
+    },
+    "Iraq": {
+        "capital": "Baghdad",
+        "population": 43533592,
+        "flag": "🇮🇶",
+        "country_code": "IRQ",
+        "coords": [
+            33.2232,
+            43.6793
+        ]
+    },
+    "Israel": {
+        "capital": "Jerusalem",
+        "population": 9364000,
+        "flag": "🇮🇱",
+        "country_code": "ISR",
+        "coords": [
+            31.0461,
+            34.8516
+        ]
+    },
+    "Japan": {
+        "capital": "Tokyo",
+        "population": 125681593,
+        "flag": "🇯🇵",
+        "country_code": "JPN",
+        "coords": [
+            36.2048,
+            138.2529
+        ]
+    },
+    "Jordan": {
+        "capital": "Amman",
+        "population": 11148278,
+        "flag": "🇯🇴",
+        "country_code": "JOR",
+        "coords": [
+            30.5852,
+            36.2384
+        ]
+    },
+    "Kazakhstan": {
+        "capital": "Astana",
+        "population": 19398331,
+        "flag": "🇰🇿",
+        "country_code": "KAZ",
+        "coords": [
+            48.0196,
+            66.9237
+        ]
+    },
+    "Kuwait": {
+        "capital": "Kuwait City",
+        "population": 4294621,
+        "flag": "🇰🇼",
+        "country_code": "KWT",
+        "coords": [
+            29.3117,
+            47.4818
+        ]
+    },
+    "Kyrgyzstan": {
+        "capital": "Bishkek",
+        "population": 6735347,
+        "flag": "🇰🇬",
+        "country_code": "KGZ",
+        "coords": [
+            41.2044,
+            74.7661
+        ]
+    },
+    "Laos": {
+        "capital": "Vientiane",
+        "population": 7529475,
+        "flag": "🇱🇦",
+        "country_code": "LAO",
+        "coords": [
+            19.8563,
+            102.4955
+        ]
+    },
+    "Lebanon": {
+        "capital": "Beirut",
+        "population": 5353930,
+        "flag": "🇱🇧",
+        "country_code": "LBN",
+        "coords": [
+            33.8547,
+            35.8623
+        ]
+    },
+    "Malaysia": {
+        "capital": "Kuala Lumpur",
+        "population": 33938221,
+        "flag": "🇲🇾",
+        "country_code": "MYS",
+        "coords": [
+            4.2105,
+            101.9758
+        ]
+    },
+    "Maldives": {
+        "capital": "Malé",
+        "population": 521021,
+        "flag": "🇲🇻",
+        "country_code": "MDV",
+        "coords": [
+            3.2028,
+            73.2207
+        ]
+    },
+    "Mongolia": {
+        "capital": "Ulaanbaatar",
+        "population": 3398366,
+        "flag": "🇲🇳",
+        "country_code": "MNG",
+        "coords": [
+            46.8625,
+            103.8467
+        ]
+    },
+    "Myanmar": {
+        "capital": "Naypyidaw",
+        "population": 54179306,
+        "flag": "🇲🇲",
+        "country_code": "MMR",
+        "coords": [
+            21.9162,
+            95.9560
+        ]
+    },
+    "Nepal": {
+        "capital": "Kathmandu",
+        "population": 30547580,
+        "flag": "🇳🇵",
+        "country_code": "NPL",
+        "coords": [
+            28.3949,
+            84.1240
+        ]
+    },
+    "North Korea": {
+        "capital": "Pyongyang",
+        "population": 26072217,
+        "flag": "🇰🇵",
+        "country_code": "PRK",
+        "coords": [
+            40.3399,
+            127.5101
+        ]
+    },
+    "Oman": {
+        "capital": "Muscat",
+        "population": 4576298,
+        "flag": "🇴🇲",
+        "country_code": "OMN",
+        "coords": [
+            21.4735,
+            55.9754
+        ]
+    },
+    "Pakistan": {
+        "capital": "Islamabad",
+        "population": 231402117,
+        "flag": "🇵🇰",
+        "country_code": "PAK",
+        "coords": [
+            30.3753,
+            69.3451
+        ]
+    },
+    "Palestine": {
+        "capital": "Ramallah",
+        "population": 5371230,
+        "flag": "🇵🇸",
+        "country_code": "PSE",
+        "coords": [
+            31.9522,
+            35.2332
+        ]
+    },
+    "Philippines": {
+        "capital": "Manila",
+        "population": 115559009,
+        "flag": "🇵🇭",
+        "country_code": "PHL",
+        "coords": [
+            12.8797,
+            121.7740
+        ]
+    },
+    "Qatar": {
+        "capital": "Doha",
+        "population": 2930524,
+        "flag": "🇶🇦",
+        "country_code": "QAT",
+        "coords": [
+            25.3548,
+            51.1839
+        ]
+    },
+    "Russia": {
+        "capital": "Moscow",
+        "population": 146447424,
+        "flag": "🇷🇺",
+        "country_code": "RUS",
+        "coords": [
+            61.5240,
+            105.3188
+        ]
+    },
+    "Saudi Arabia": {
+        "capital": "Riyadh",
+        "population": 36408820,
+        "flag": "🇸🇦",
+        "country_code": "SAU",
+        "coords": [
+            23.8859,
+            45.0792
+        ]
+    },
+    "Singapore": {
+        "capital": "Singapore",
+        "population": 5453600,
+        "flag": "🇸🇬",
+        "country_code": "SGP",
+        "coords": [
+            1.3521,
+            103.8198
+        ]
+    },
+    "South Korea": {
+        "capital": "Seoul",
+        "population": 51744876,
+        "flag": "🇰🇷",
+        "country_code": "KOR",
+        "coords": [
+            35.9078,
+            127.7669
+        ]
+    },
+    "Sri Lanka": {
+        "capital": "Sri Jayawardenepura Kotte",
+        "population": 22037000,
+        "flag": "🇱🇰",
+        "country_code": "LKA",
+        "coords": [
+            7.8731,
+            80.7718
+        ]
+    },
+    "Syria": {
+        "capital": "Damascus",
+        "population": 22125249,
+        "flag": "🇸🇾",
+        "country_code": "SYR",
+        "coords": [
+            34.8021,
+            38.9968
+        ]
+    },
+    "Taiwan": {
+        "capital": "Taipei",
+        "population": 23894394,
+        "flag": "🇹🇼",
+        "country_code": "TWN",
+        "coords": [
+            23.6978,
+            120.9605
+        ]
+    },
+    "Tajikistan": {
+        "capital": "Dushanbe",
+        "population": 9952787,
+        "flag": "🇹🇯",
+        "country_code": "TJK",
+        "coords": [
+            38.8610,
+            71.2761
+        ]
+    },
+    "Thailand": {
+        "capital": "Bangkok",
+        "population": 71801279,
+        "flag": "🇹🇭",
+        "country_code": "THA",
+        "coords": [
+            15.8700,
+            100.9925
+        ]
+    },
+    "Timor-Leste": {
+        "capital": "Dili",
+        "population": 1340513,
+        "flag": "🇹🇱",
+        "country_code": "TLS",
+        "coords": [
+            -8.8742,
+            125.7275
+        ]
+    },
+    "Turkey": {
+        "capital": "Ankara",
+        "population": 85279553,
+        "flag": "🇹🇷",
+        "country_code": "TUR",
+        "coords": [
+            38.9637,
+            35.2433
+        ]
+    },
+    "Turkmenistan": {
+        "capital": "Ashgabat",
+        "population": 6430770,
+        "flag": "🇹🇲",
+        "country_code": "TKM",
+        "coords": [
+            38.9697,
+            59.5563
+        ]
+    },
+    "United Arab Emirates": {
+        "capital": "Abu Dhabi",
+        "population": 9441129,
+        "flag": "🇦🇪",
+        "country_code": "ARE",
+        "coords": [
+            23.4241,
+            53.8478
+        ]
+    },
+    "Uzbekistan": {
+        "capital": "Tashkent",
+        "population": 35648100,
+        "flag": "🇺🇿",
+        "country_code": "UZB",
+        "coords": [
+            41.3775,
+            64.5853
+        ]
+    },
+    "Vietnam": {
+        "capital": "Hanoi",
+        "population": 100987686,
+        "flag": "🇻🇳",
+        "country_code": "VNM",
+        "coords": [
+            14.0583,
+            108.2772
+        ]
+    },
+    "Yemen": {
+        "capital": "Sana'a",
+        "population": 33696614,
+        "flag": "🇾🇪",
+        "country_code": "YEM",
+        "coords": [
+            15.5527,
+            48.5164
+        ]
+    }
+}
