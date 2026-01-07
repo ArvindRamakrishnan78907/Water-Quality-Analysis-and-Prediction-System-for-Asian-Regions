@@ -1012,12 +1012,27 @@ chart_type = st.sidebar.radio(
     horizontal=False
 )
 
-available_indicators = list(indicator_thresholds.keys())
-if 'Indicator' in df.columns:
-    data_indicators = df['Indicator'].unique().tolist()
-    available_indicators = [i for i in available_indicators if i in data_indicators] or data_indicators[:5]
-
-selected_indicator = st.sidebar.selectbox('Indicator', available_indicators)
+# Show indicator selection only when Line Chart or Bar Chart is selected
+if chart_type in ["Line Chart", "Bar Chart"]:
+    st.sidebar.markdown("**📈 Indicator Options**")
+    
+    available_indicators = list(indicator_thresholds.keys())
+    if 'Indicator' in df.columns:
+        data_indicators = df['Indicator'].unique().tolist()
+        available_indicators = [i for i in available_indicators if i in data_indicators] or data_indicators[:5]
+    
+    selected_indicator = st.sidebar.selectbox(
+        'Select Indicator', 
+        available_indicators,
+        help="Choose which water quality indicator to display on the chart"
+    )
+else:
+    # Default indicator for other chart types
+    available_indicators = list(indicator_thresholds.keys())
+    if 'Indicator' in df.columns:
+        data_indicators = df['Indicator'].unique().tolist()
+        available_indicators = [i for i in available_indicators if i in data_indicators] or data_indicators[:5]
+    selected_indicator = available_indicators[0] if available_indicators else 'pH'
 
 
 risk_color_map = {
