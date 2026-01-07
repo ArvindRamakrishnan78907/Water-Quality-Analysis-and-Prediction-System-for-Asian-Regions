@@ -22,6 +22,10 @@ streamlit run streamlit_app.py
 
 Open http://localhost:8501 in your browser.
 
+
+
+This project is updated regularly.Pls feel free to make any changes to enhance the program
+
 ## Features
 
 - **49 Asian Countries** with comprehensive river basin data
