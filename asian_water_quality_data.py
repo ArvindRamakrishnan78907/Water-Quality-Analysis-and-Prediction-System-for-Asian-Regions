@@ -1943,4 +1943,16 @@ def normalize_uploaded_data(df: pd.DataFrame) -> pd.DataFrame:
     df['Month'] = pd.to_datetime(df['SampleDateTime']).dt.month
     df['Year'] = pd.to_datetime(df['SampleDateTime']).dt.year
     
+    # Add columns required for proper display (fix for "Unknown" Quality Class)
+    if 'QualityClass' not in df.columns:
+        df['QualityClass'] = 'Uploaded'
+    if 'DataSource' not in df.columns:
+        df['DataSource'] = 'User Upload'
+    if 'Confidence' not in df.columns:
+        df['Confidence'] = 'User Data'
+    if 'IsRealData' not in df.columns:
+        df['IsRealData'] = True
+    if 'DateTime' not in df.columns and 'SampleDateTime' in df.columns:
+        df['DateTime'] = df['SampleDateTime']
+    
     return df

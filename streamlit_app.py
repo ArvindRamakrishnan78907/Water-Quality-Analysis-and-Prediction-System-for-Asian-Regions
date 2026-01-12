@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import matplotlib.dates as mdates
 from catboost import CatBoostClassifier
 import plotly.express as px
+import html  # For XSS prevention
 
 # Global constants
 MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -614,6 +615,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# No global loading overlay - using Streamlit's native approach instead
+
 st.title("🌊 Asian Water Quality Dashboard - LIVE")
 
 if 'data_source' not in st.session_state:
@@ -783,61 +786,16 @@ else:
         update_count = st.session_state.live_data_count
     else:
         st.session_state.data_source = 'api'
-        loading_placeholder = st.empty()
-        loading_placeholder.markdown("""
-        <div style='
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 80px 20px;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            border-radius: 20px;
-            margin: 20px 0;
-        '>
-            <div style='font-size: 80px; animation: wave 2s ease-in-out infinite;'>🌊</div>
-            <h2 style='color: #e94560; margin: 20px 0 10px 0; font-weight: 600;'>Loading Water Quality Data</h2>
-            <p style='color: #a0a0a0; margin: 0;'>Fetching real-time data from monitoring stations...</p>
-            <div style='
-                width: 200px;
-                height: 4px;
-                background: #333;
-                border-radius: 2px;
-                margin-top: 25px;
-                overflow: hidden;
-            '>
-                <div style='
-                    width: 40%;
-                    height: 100%;
-                    background: linear-gradient(90deg, #e94560, #0f3460);
-                    animation: loading 1.5s ease-in-out infinite;
-                '></div>
-            </div>
-        </div>
-        <style>
-            @keyframes wave { 
-                0%, 100% { transform: translateY(0) rotate(0deg); } 
-                25% { transform: translateY(-10px) rotate(-5deg); }
-                75% { transform: translateY(-10px) rotate(5deg); }
-            }
-            @keyframes loading {
-                0% { transform: translateX(-100%); }
-                50% { transform: translateX(150%); }
-                100% { transform: translateX(-100%); }
-            }
-        </style>
-        """, unsafe_allow_html=True)
         df = load_api_data(selected_country)
-        loading_placeholder.empty()
 
 
-# Filter data to only include the selected country's data
-if 'Region' in df.columns:
+# Filter data to only include the selected country's data (skip for uploaded data)
+if 'Region' in df.columns and st.session_state.data_source != 'upload':
     df = df[df['Region'] == selected_country]
 
-# Also filter to only include valid basins for the selected country
+# Also filter to only include valid basins for the selected country (skip for uploaded data)
 country_basins = get_basins_for_country(selected_country)
-if 'SiteID' in df.columns and country_basins:
+if 'SiteID' in df.columns and country_basins and st.session_state.data_source != 'upload':
     df = df[df['SiteID'].isin(country_basins)]
 
 if 'risk_level' not in df.columns:
@@ -865,7 +823,11 @@ if selected_country == "India":
     
 
     # Get basins based on selected state
-    if selected_state == "All States":
+    # For uploaded data, show uploaded sites instead of filtering by REAL_WATER_QUALITY_DATA
+    if st.session_state.data_source == 'upload':
+        available_sites = sorted(df['SiteID'].unique().tolist()) if 'SiteID' in df.columns else []
+        st.sidebar.caption(f"📍 {len(available_sites)} sites from uploaded data")
+    elif selected_state == "All States":
         all_sites = get_india_state_basins()
         available_sites = [
             s for s in all_sites 
@@ -965,6 +927,21 @@ else:
 
 st.sidebar.caption(f"📊 {len(df):,} records for {month} {selected_year}")
 
+# View Type selector - only show "Last 30 Days" option for current year
+st.sidebar.markdown("**🔍 View Type**")
+if selected_year == current_year:
+    view_type = st.sidebar.radio(
+        "Data View",
+        ["Year View", "Last 30 Days"],
+        index=0,
+        horizontal=True,
+        help="Year View shows all data for the selected year/month. Last 30 Days shows only recent data."
+    )
+else:
+    # For historical years, only Year View makes sense
+    view_type = "Year View"
+    st.sidebar.info(f"📅 Showing {selected_year} data (Year View only)")
+
 data_type = country_meta.get('data_type', 'simulated')
 data_src = country_meta.get('data_source', 'Simulated')
 if data_type == 'api':
@@ -1049,7 +1026,7 @@ if st.sidebar.button("🔮 Run Prediction"):
         if not site_data.empty and 'risk_level' in site_data.columns:
             avg_risk = site_data['risk_level'].mean()
             
-            month_idx = months.index(month) + 1
+            month_idx = MONTH_LABELS.index(month) + 1 if month in MONTH_LABELS else 1
             month_data = site_data[site_data['Month'] == month_idx]
             if not month_data.empty:
                 monthly_risk = month_data['risk_level'].mean()
@@ -1079,7 +1056,7 @@ if st.sidebar.button("🔮 Run Prediction"):
             with col2:
                 st.metric("Data Points", len(site_data))
             with col3:
-                safe_pct = (site_data['risk_level'] == 0).sum() / len(site_data) * 100
+                safe_pct = (site_data['risk_level'] == 0).sum() / len(site_data) * 100 if len(site_data) > 0 else 0
                 st.metric("Safe Readings", f"{safe_pct:.0f}%")
         else:
             st.warning("No data available for prediction. Please select a different basin or upload data.")
@@ -1218,11 +1195,29 @@ if st.session_state.data_source == 'live':
     """, unsafe_allow_html=True)
     st.subheader(f"🌊 Current Water Quality - {site}")
 else:
-    st.subheader(f"🌊 Current Water Quality - {site} (Last 30 Days)")
-    thirty_days_ago = datetime.now() - timedelta(days=30)
-    st.caption(f"Data from {thirty_days_ago.strftime('%b %d')} to {current_time[:10]}")
+    if view_type == "Last 30 Days":
+        st.subheader(f"🌊 Current Water Quality - {site} (Last 30 Days)")
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        st.caption(f"Data from {thirty_days_ago.strftime('%b %d')} to {current_time[:10]}")
+    else:
+        st.subheader(f"🌊 Current Water Quality - {site}")
+        st.caption(f"Data for {month} {selected_year}")
 
 # Filter site data for last 30 days for "current" status
+if 'SiteID' not in df.columns or df.empty:
+    st.markdown("""
+    <div style='background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%); border-radius: 20px; padding: 60px 40px;
+                text-align: center; border: 1px solid #d2d2d7; margin: 20px 0;'>
+        <div style='font-size: 64px; margin-bottom: 20px;'>📭</div>
+        <h2 style='color: #1d1d1f; margin: 0; font-weight: 600;'>Data Unavailable</h2>
+        <p style='color: #86868b; margin-top: 15px; font-size: 16px;'>
+            No water quality data available for this selection.<br>
+            Try selecting a different year, month, or basin.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.stop()
+
 site_data = df[df['SiteID'] == site].copy()
 
 if site_data.empty:
@@ -1239,7 +1234,8 @@ if site_data.empty:
     """, unsafe_allow_html=True)
     st.stop()
 
-if 'DateTime' in site_data.columns:
+# Only apply 30-day filter when explicitly requested via View Type
+if view_type == "Last 30 Days" and 'DateTime' in site_data.columns:
     site_data['DateTime'] = pd.to_datetime(site_data['DateTime'], errors='coerce')
     thirty_days_ago = datetime.now() - timedelta(days=30)
     recent_data = site_data[site_data['DateTime'] >= thirty_days_ago]
@@ -1431,3 +1427,5 @@ if show_data_preview:
             st.caption(f"Earliest: {date_col.min()}")
             st.caption(f"Latest: {date_col.max()}")
             st.caption(f"Span: {(date_col.max() - date_col.min()).days} days")
+
+# Page loading complete - all content rendered
