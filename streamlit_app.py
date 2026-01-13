@@ -14,8 +14,8 @@ MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 RISK_LABELS = {2: 'high', 1: 'moderate', 0: 'safe'}
 STATUS_THRESHOLDS = [
     (0.5, "Excellent", "🟢", "#27ae60"),
-    (1.0, "Good", "🟡", "#f39c12"),
-    (1.5, "Moderate", "🟠", "#e67e22"),
+    (0.8, "Good", "🟡", "#f39c12"),      # Stricter threshold for Good (was 1.0)
+    (1.6, "Moderate", "🟠", "#e67e22"),  # Wider threshold for Moderate (was 1.5)
     (float('inf'), "Poor", "🔴", "#e74c3c"),
 ]
 CONFIDENCE_STYLES = {
@@ -37,8 +37,8 @@ indicator_thresholds = {
     },
     'pH': {
         'type': 'outside_range',
-        'moderate': [6.0, 9.0],
-        'high_threshold': [6.5, 8.5]
+        'moderate': [6.0, 9.0],      # Outer limits (Extreme -> High Risk)
+        'high_threshold': [6.5, 8.5] # Inner limits (Safe Range -> Moderate Risk)
     },       
     'Total Nitrogen': {
         'type': 'above',
@@ -116,14 +116,21 @@ def determine_risk_level(row):
         if (isinstance(moderate_threshold, list) and len(moderate_threshold) == 2 and 
             isinstance(high_threshold, list) and len(high_threshold) == 2):
             
-            mod_lower, mod_upper = moderate_threshold
-            high_lower, high_upper = high_threshold
+            # moderate_threshold here defines the OUTER boundaries (6.0 - 9.0)
+            # high_threshold here defines the INNER boundaries (6.5 - 8.5)
             
-            if value < high_lower or value > high_upper:
+            mod_lower, mod_upper = moderate_threshold
+            safe_lower, safe_upper = high_threshold
+            
+            # Check for High Risk first (Extreme deviation)
+            if value < mod_lower or value > mod_upper:
                 risk_level = 2
             
-            elif value < mod_lower or value > mod_upper:
+            # Then check for Moderate Risk (Minor deviation)
+            elif value < safe_lower or value > safe_upper:
                 risk_level = 1
+            
+            # Otherwise Risk is 0 (Safe)
     
     return risk_level
 
@@ -253,22 +260,7 @@ def aggregate_risk_by_date(df):
 
 
 def predict_risk_for_site_month(model, df, site_id, target_month, current_year):
-    """
-    Predict risk level using most recent historical data for the same site and month.
     
-    IMPROVED: Added exponential smoothing fallback for trend-aware prediction
-    when model-based prediction is unavailable.
-    
-    Parameters:
-    model: Trained prediction model
-    df: aggregated DataFrame
-    site_id: Target SiteID to predict for
-    target_month: Month to predict for (1-12)
-    current_year: Current year (to avoid using future data)
-    
-    Returns:
-    Predicted risk level (int) or forecasted value (float)
-    """
     historical_data = df[(df['SiteID'] == site_id) & 
                          (df['Month'] == target_month) & 
                          (df['Year'] < current_year)]
@@ -493,10 +485,10 @@ def create_bar_chart(data, site_id, indicator='Chl-a'):
         
         from matplotlib.patches import Patch
         legend_elements = [
-            Patch(facecolor='#27ae60', label='Excellent'),
-            Patch(facecolor='#f39c12', label='Good'),
-            Patch(facecolor='#e67e22', label='Moderate'),
-            Patch(facecolor='#e74c3c', label='Poor')
+            Patch(facecolor='#27ae60', label='  Excellent'),
+            Patch(facecolor='#f39c12', label='  Good'),
+            Patch(facecolor='#e67e22', label='  Moderate'),
+            Patch(facecolor='#e74c3c', label='  Poor')
         ]
         ax.legend(handles=legend_elements, loc='upper right')
         
@@ -917,7 +909,124 @@ st.markdown(f"""
 
 # No global loading overlay - using Streamlit's native approach instead
 
-st.title("🌊 Asian Water Quality Dashboard - LIVE")
+# ============================================
+# HERO BANNER WITH ANIMATED STATS
+# ============================================
+# Separate CSS styles
+st.markdown(f"""
+<style>
+    .hero-banner {{
+        background: linear-gradient(135deg, {current_theme['primary']} 0%, {current_theme['accent']} 50%, {current_theme['secondary']} 100%);
+        border-radius: 20px;
+        padding: 30px 40px;
+        margin-bottom: 25px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }}
+    .hero-title {{
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }}
+    .hero-icon {{
+        font-size: 50px;
+    }}
+    .hero-text h1 {{
+        margin: 0;
+        font-size: 32px;
+        font-weight: 700;
+        color: white !important;
+    }}
+    .hero-text p {{
+        margin: 5px 0 0 0;
+        font-size: 14px;
+        color: white !important;
+    }}
+    .hero-stats {{
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }}
+    .stat-card {{
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 15px;
+        padding: 15px 25px;
+        min-width: 140px;
+        flex: 1;
+        text-align: center;
+        transition: all 0.3s ease;
+    }}
+    .stat-card:hover {{
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.25);
+    }}
+    .stat-value {{
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+    }}
+    .stat-label {{
+        font-size: 12px;
+        color: rgba(255,255,255,0.9);
+        margin: 5px 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }}
+    .stat-icon {{
+        font-size: 20px;
+        margin-bottom: 5px;
+    }}
+    .live-pulse {{
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background: #4caf50;
+        border-radius: 50%;
+        margin-right: 8px;
+        box-shadow: 0 0 10px #4caf50;
+    }}
+</style>
+""", unsafe_allow_html=True)
+
+# Separate HTML content
+st.markdown("""
+<div class="hero-banner">
+    <div class="hero-title">
+        <span class="hero-icon">🌊</span>
+        <div class="hero-text">
+            <h1>Asian Water Quality Dashboard</h1>
+            <p><span class="live-pulse"></span>Real-time monitoring across Asian river basins</p>
+        </div>
+    </div>
+    <div class="hero-stats">
+        <div class="stat-card">
+            <div class="stat-icon">🌏</div>
+            <p class="stat-value">48</p>
+            <p class="stat-label">Countries</p>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🏞️</div>
+            <p class="stat-value">150+</p>
+            <p class="stat-label">River Basins</p>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <p class="stat-value">8</p>
+            <p class="stat-label">Indicators</p>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⚡</div>
+            <p class="stat-value">LIVE</p>
+            <p class="stat-label">Updates</p>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 if 'data_source' not in st.session_state:
     st.session_state.data_source = 'api'
@@ -1228,21 +1337,14 @@ sorted_sites = sorted(filtered_sites, key=river_sort_key)
 query_params = st.query_params
 saved_site = query_params.get("river", None)
 
-# Determine default index - only used on first load when session state doesn't have a selection
-default_index = 0
-# Check if we already have a valid selection in session state (this takes priority)
-if 'river_selector' in st.session_state and st.session_state.river_selector in sorted_sites:
-    # Session state already has a valid selection, Streamlit will use it
-    default_index = sorted_sites.index(st.session_state.river_selector)
-elif saved_site and saved_site in sorted_sites:
-    # Use query param on first load
-    default_index = sorted_sites.index(saved_site)
-    # Pre-set session state to match
-    st.session_state.river_selector = saved_site
-elif 'last_selected_site' in st.session_state and st.session_state.last_selected_site in sorted_sites:
-    default_index = sorted_sites.index(st.session_state.last_selected_site)
-    # Pre-set session state to match
-    st.session_state.river_selector = st.session_state.last_selected_site
+# Determine default value - only used on first load when session state doesn't have a selection
+if 'river_selector' not in st.session_state:
+    if saved_site and saved_site in sorted_sites:
+        st.session_state.river_selector = saved_site
+    elif 'last_selected_site' in st.session_state and st.session_state.last_selected_site in sorted_sites:
+        st.session_state.river_selector = st.session_state.last_selected_site
+    elif sorted_sites:
+        st.session_state.river_selector = sorted_sites[0]
 
 def on_site_change():
     st.session_state.last_selected_site = st.session_state.river_selector
@@ -1252,7 +1354,6 @@ def on_site_change():
 site = st.sidebar.selectbox(
     'River/Basin', 
     sorted_sites, 
-    index=default_index,
     key='river_selector',
     on_change=on_site_change
 )
@@ -1540,26 +1641,147 @@ if not site_data.empty and 'risk_level' in site_data.columns:
     
     st.subheader(f"🔮 Water Quality Prediction for {site} in {month}/{selected_year}")
     
+    # Enhanced Glassmorphism Prediction Card
     st.markdown(f"""
-    <div style='background: linear-gradient(135deg, {color}22, {color}44); 
-                border-radius: 15px; 
-                padding: 30px; 
-                text-align: center;
-                margin: 10px 0;'>
-        <h1 style='margin:0; font-size: 48px;'>{emoji}</h1>
-        <h2 style='margin:10px 0; color: {color}; font-size: 36px; font-weight: bold;'>{status}</h2>
-        <p style='margin:0; color: #666; font-size: 16px;'>Based on historical data analysis</p>
+    <style>
+        .prediction-card {{
+            background: linear-gradient(135deg, {color}15, {color}30);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid {color}50;
+            border-radius: 25px;
+            padding: 40px;
+            text-align: center;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 50px {color}30, inset 0 1px 1px rgba(255,255,255,0.3);
+            transition: all 0.4s ease;
+        }}
+        
+        .prediction-card:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px {color}40, inset 0 1px 1px rgba(255,255,255,0.4);
+        }}
+        
+        .prediction-card::before {{
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }}
+        
+        @keyframes shimmer {{
+            0% {{ transform: translateX(-100%) rotate(45deg); }}
+            100% {{ transform: translateX(100%) rotate(45deg); }}
+        }}
+        
+        .prediction-emoji {{
+            font-size: 64px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
+        }}
+        
+        .prediction-status {{
+            margin: 15px 0;
+            color: {color};
+            font-size: 42px;
+            font-weight: 800;
+            text-shadow: 0 3px 10px {color}40;
+        }}
+        
+        .prediction-subtitle {{
+            color: {current_theme['text_secondary']};
+            font-size: 14px;
+            margin: 0;
+        }}
+        
+        /* Glassmorphism Metric Cards */
+        .glass-metrics {{
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }}
+        
+        .glass-metric {{
+            flex: 1;
+            min-width: 150px;
+            background: linear-gradient(135deg, {current_theme['card_bg']}cc, {current_theme['background']}cc);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid {current_theme['input_border']};
+            border-radius: 18px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }}
+        
+        .glass-metric:hover {{
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }}
+        
+        .glass-metric-icon {{
+            font-size: 24px;
+            margin-bottom: 8px;
+        }}
+        
+        .glass-metric-value {{
+            font-size: 28px;
+            font-weight: 700;
+            color: {current_theme['accent']};
+            margin: 5px 0;
+        }}
+        
+        .glass-metric-label {{
+            font-size: 12px;
+            color: {current_theme['text_secondary']};
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }}
+        
+        .glass-metric-delta {{
+            font-size: 11px;
+            color: {current_theme['text_secondary']};
+            margin-top: 5px;
+            opacity: 0.8;
+        }}
+    </style>
+    
+    <div class="prediction-card">
+        <div class="prediction-emoji">{emoji}</div>
+        <h2 class="prediction-status">{status}</h2>
+        <p class="prediction-subtitle">Based on historical data analysis</p>
+    </div>
+    
+    <div class="glass-metrics">
+        <div class="glass-metric">
+            <div class="glass-metric-icon">📊</div>
+            <div class="glass-metric-value">{predicted_risk:.2f}</div>
+            <div class="glass-metric-label">Risk Score</div>
+            <div class="glass-metric-delta">↓ Lower is better</div>
+        </div>
+        <div class="glass-metric">
+            <div class="glass-metric-icon">📈</div>
+            <div class="glass-metric-value">{len(site_data):,}</div>
+            <div class="glass-metric-label">Data Points</div>
+            <div class="glass-metric-delta">Records analyzed</div>
+        </div>
+        <div class="glass-metric">
+            <div class="glass-metric-icon">✅</div>
+            <div class="glass-metric-value">{(site_data['risk_level'] == 0).sum() / len(site_data) * 100 if len(site_data) > 0 else 0:.0f}%</div>
+            <div class="glass-metric-label">Safe Readings</div>
+            <div class="glass-metric-delta">Within safe limits</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Risk Score", f"{predicted_risk:.2f}", delta="Lower is better", delta_color="inverse")
-    with col2:
-        st.metric("Data Points", len(site_data))
-    with col3:
-        safe_pct = (site_data['risk_level'] == 0).sum() / len(site_data) * 100 if len(site_data) > 0 else 0
-        st.metric("Safe Readings", f"{safe_pct:.0f}%")
 else:
     st.warning("No data available for prediction. Please select a different basin or upload data.")
 
@@ -1827,25 +2049,82 @@ if chart_type == "Heatmap":
             )
             
             if not pivot_data.empty:
+                # Create risk-level matrix based on indicator-specific thresholds
+                risk_matrix = pivot_data.copy()
+                
+                for indicator in pivot_data.index:
+                    threshold = indicator_thresholds.get(indicator)
+                    if threshold:
+                        threshold_type = threshold.get('type', 'above')
+                        moderate = threshold.get('moderate')
+                        high = threshold.get('high_threshold')
+                        
+                        for month in pivot_data.columns:
+                            value = pivot_data.loc[indicator, month]
+                            if pd.isna(value):
+                                risk_matrix.loc[indicator, month] = np.nan
+                                continue
+                            
+                            # Use centralized risk calculation
+                            mock_row = {'Indicator': indicator, 'Value (Agency)': value}
+                            risk_matrix.loc[indicator, month] = determine_risk_level(mock_row)
+                    else:
+                        # No threshold defined - use generic scale
+                        for month in pivot_data.columns:
+                            risk_matrix.loc[indicator, month] = 0  # Default safe
+                
                 fig, ax = plt.subplots(figsize=(14, 8))
                 
-                # seaborn already imported at top of file
-                sns.heatmap(
-                    pivot_data, 
-                    annot=True, 
-                    fmt='.1f', 
-                    cmap='RdYlGn_r',
-                    ax=ax,
-                    cbar_kws={'label': 'Average Value'}
-                )
+                # Custom colormap: Green (safe), Yellow (moderate), Red (high risk)
+                from matplotlib.colors import ListedColormap
+                risk_cmap = ListedColormap(['#27ae60', '#f39c12', '#e74c3c'])
                 
-                ax.set_xticklabels([MONTH_LABELS[int(m)-1] for m in pivot_data.columns], rotation=45)
-                ax.set_title(f'Water Quality Indicators Over Time - {site}', fontsize=14, fontweight='bold')
+                # Plot the risk matrix with annotations showing actual values
+                im = ax.imshow(risk_matrix.values, cmap=risk_cmap, aspect='auto', vmin=0, vmax=2)
+                
+                # Add value annotations
+                for i, indicator in enumerate(pivot_data.index):
+                    for j, month in enumerate(pivot_data.columns):
+                        value = pivot_data.loc[indicator, month]
+                        if pd.notna(value):
+                            # Text color based on risk level for contrast
+                            risk = risk_matrix.loc[indicator, month]
+                            text_color = 'white' if risk >= 1 else 'black'
+                            ax.text(j, i, f'{value:.1f}', ha='center', va='center', 
+                                   fontsize=9, color=text_color, fontweight='bold')
+                
+                # Set labels
+                ax.set_xticks(np.arange(len(pivot_data.columns)))
+                ax.set_yticks(np.arange(len(pivot_data.index)))
+                ax.set_xticklabels([MONTH_LABELS[int(m)-1] for m in pivot_data.columns], rotation=45, ha='right')
+                ax.set_yticklabels(pivot_data.index)
+                ax.set_title(f'Water Quality Risk Levels by Indicator - {site}', fontsize=14, fontweight='bold')
                 ax.set_xlabel('Month')
                 ax.set_ylabel('Indicator')
                 
+                # Add legend
+                from matplotlib.patches import Patch
+                legend_elements = [
+                    Patch(facecolor='#27ae60', label='  Safe'),
+                    Patch(facecolor='#f39c12', label='  Moderate Risk'),
+                    Patch(facecolor='#e74c3c', label='  High Risk')
+                ]
+                ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.15, 1))
+                
                 plt.tight_layout()
                 st.pyplot(fig)
+                
+                # Add threshold reference
+                with st.expander("📋 Indicator Thresholds Reference"):
+                    threshold_info = []
+                    for ind, thresh in indicator_thresholds.items():
+                        if thresh['type'] == 'above':
+                            threshold_info.append(f"**{ind}**: Safe < {thresh['moderate']}, Moderate {thresh['moderate']}-{thresh['high_threshold']}, High > {thresh['high_threshold']}")
+                        elif thresh['type'] == 'below':
+                            threshold_info.append(f"**{ind}**: Safe > {thresh['moderate']}, Moderate {thresh['high_threshold']}-{thresh['moderate']}, High < {thresh['high_threshold']}")
+                        elif thresh['type'] == 'outside_range':
+                            threshold_info.append(f"**{ind}**: Safe {thresh['high_threshold'][0]}-{thresh['high_threshold'][1]}, Moderate {thresh['moderate'][0]}-{thresh['moderate'][1]}")
+                    st.markdown("\n\n".join(threshold_info))
             else:
                 st.info("Not enough data for heatmap visualization")
         else:
@@ -2000,4 +2279,107 @@ if show_data_preview:
             st.caption(f"Latest: {date_col.max()}")
             st.caption(f"Span: {(date_col.max() - date_col.min()).days} days")
 
+# Footer CSS styles
+st.markdown(f"""
+<style>
+    .footer-container {{
+        background: linear-gradient(135deg, {current_theme['card_bg']} 0%, {current_theme['secondary']} 100%);
+        border-top: 1px solid {current_theme['input_border']};
+        border-radius: 20px 20px 0 0;
+        padding: 40px 30px;
+        margin-top: 50px;
+        text-align: center;
+    }}
+    .footer-brand {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }}
+    .footer-brand-icon {{
+        font-size: 32px;
+    }}
+    .footer-brand-text {{
+        font-size: 20px;
+        font-weight: 700;
+        color: {current_theme['accent']};
+    }}
+    .footer-links {{
+        display: flex;
+        justify-content: center;
+        gap: 25px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }}
+    .footer-link {{
+        color: {current_theme['text_secondary']} !important;
+        text-decoration: none;
+        font-size: 14px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        background: {current_theme['background']}80;
+        transition: all 0.3s ease;
+    }}
+    .footer-link:hover {{
+        color: {current_theme['accent']} !important;
+        background: {current_theme['accent']}20;
+    }}
+    .footer-divider {{
+        width: 100px;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, {current_theme['accent']}, transparent);
+        margin: 25px auto;
+    }}
+    .footer-info {{
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+        margin: 20px 0;
+    }}
+    .footer-info-item {{
+        color: {current_theme['text_secondary']};
+        font-size: 12px;
+    }}
+    .footer-info-item span {{
+        color: {current_theme['accent']};
+        font-weight: 600;
+    }}
+    .footer-copyright {{
+        color: {current_theme['text_secondary']};
+        font-size: 12px;
+        margin-top: 20px;
+    }}
+    .footer-credits {{
+        color: {current_theme['text_secondary']};
+        font-size: 11px;
+        margin-top: 10px;
+        opacity: 0.7;
+    }}
+</style>
+""", unsafe_allow_html=True)
 
+# Footer HTML content
+current_time_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+st.markdown(f"""
+<div class="footer-container">
+    <div class="footer-brand">
+        <span class="footer-brand-icon">🌊</span>
+        <span class="footer-brand-text">Asian Water Quality Dashboard</span>
+    </div>
+    <div class="footer-links">
+        <a href="https://github.com/ArvindRamakrishnan78907/Water-Quality-Analysis-and-Prediction-System-for-Asian-Regions" target="_blank" class="footer-link">📂 Source Code</a>
+        <a href="https://github.com/ArvindRamakrishnan78907/Water-Quality-Analysis-and-Prediction-System-for-Asian-Regions#readme" target="_blank" class="footer-link">📖 Documentation</a>
+        <a href="https://github.com/ArvindRamakrishnan78907/Water-Quality-Analysis-and-Prediction-System-for-Asian-Regions/issues" target="_blank" class="footer-link">🐛 Report Issues</a>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-info">
+        <div class="footer-info-item">📊 Data Sources: <span>World Bank, CPCB</span></div>
+        <div class="footer-info-item">🔄 Updated: <span>{current_time_str}</span></div>
+        <div class="footer-info-item">🌏 Coverage: <span>48 Countries</span></div>
+    </div>
+    <p class="footer-copyright">© 2026 Water Quality Analysis and Prediction System</p>
+    <p class="footer-credits">Built with ❤️ using Streamlit</p>
+</div>
+""", unsafe_allow_html=True)
