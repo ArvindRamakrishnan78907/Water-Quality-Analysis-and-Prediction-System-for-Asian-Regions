@@ -786,7 +786,57 @@ else:
         update_count = st.session_state.live_data_count
     else:
         st.session_state.data_source = 'api'
+        # Create placeholder for animated loading screen
+        loading_placeholder = st.empty()
+        loading_placeholder.markdown("""
+        <style>
+            @keyframes wave { 
+                0%, 100% { transform: translateY(0) rotate(0deg); } 
+                25% { transform: translateY(-10px) rotate(-5deg); }
+                75% { transform: translateY(-10px) rotate(5deg); }
+            }
+            @keyframes loading {
+                0% { transform: translateX(-100%); }
+                50% { transform: translateX(150%); }
+                100% { transform: translateX(-100%); }
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 0.6; }
+                50% { opacity: 1; }
+            }
+        </style>
+        <div style='
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border-radius: 20px;
+            margin: 20px 0;
+        '>
+            <div style='font-size: 80px; animation: wave 2s ease-in-out infinite;'>🌊</div>
+            <h2 style='color: #e94560; margin: 20px 0 10px 0; font-weight: 600;'>Loading Water Quality Data</h2>
+            <p style='color: #a0a0a0; margin: 0; animation: pulse 1.5s ease-in-out infinite;'>Fetching data from monitoring stations...</p>
+            <div style='
+                width: 200px;
+                height: 4px;
+                background: #333;
+                border-radius: 2px;
+                margin-top: 25px;
+                overflow: hidden;
+            '>
+                <div style='
+                    width: 40%;
+                    height: 100%;
+                    background: linear-gradient(90deg, #e94560, #0f3460);
+                    animation: loading 1.5s ease-in-out infinite;
+                '></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         df = load_api_data(selected_country)
+        loading_placeholder.empty()
 
 
 # Filter data to only include the selected country's data (skip for uploaded data)
@@ -874,17 +924,30 @@ def river_sort_key(name):
 
 sorted_sites = sorted(filtered_sites, key=river_sort_key)
 
-# Persistence logic
-if 'last_selected_site' not in st.session_state:
-    st.session_state.last_selected_site = sorted_sites[0] if sorted_sites else None
+# Persistence logic using query parameters (survives page refresh)
+query_params = st.query_params
+saved_site = query_params.get("river", None)
 
-# Determine default index
+# Determine default index - only used on first load when session state doesn't have a selection
 default_index = 0
-if st.session_state.last_selected_site in sorted_sites:
+# Check if we already have a valid selection in session state (this takes priority)
+if 'river_selector' in st.session_state and st.session_state.river_selector in sorted_sites:
+    # Session state already has a valid selection, Streamlit will use it
+    default_index = sorted_sites.index(st.session_state.river_selector)
+elif saved_site and saved_site in sorted_sites:
+    # Use query param on first load
+    default_index = sorted_sites.index(saved_site)
+    # Pre-set session state to match
+    st.session_state.river_selector = saved_site
+elif 'last_selected_site' in st.session_state and st.session_state.last_selected_site in sorted_sites:
     default_index = sorted_sites.index(st.session_state.last_selected_site)
+    # Pre-set session state to match
+    st.session_state.river_selector = st.session_state.last_selected_site
 
 def on_site_change():
     st.session_state.last_selected_site = st.session_state.river_selector
+    # Save to query params for persistence across refresh
+    st.query_params["river"] = st.session_state.river_selector
 
 site = st.sidebar.selectbox(
     'River/Basin', 
@@ -942,6 +1005,60 @@ else:
     view_type = "Year View"
     st.sidebar.info(f"📅 Showing {selected_year} data (Year View only)")
 
+
+if view_type == "Last 30 Days":
+    # Use SampleDateTime or DateTime column for filtering
+    date_col = 'SampleDateTime' if 'SampleDateTime' in df.columns else 'DateTime' if 'DateTime' in df.columns else None
+    if date_col:
+        df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        df = df[df[date_col] >= thirty_days_ago]
+        st.sidebar.success(f"📅 Showing Last 30 Days: {len(df):,} records")
+    else:
+        st.sidebar.warning("No date column found for 30-day filtering")
+
+# Automatic Double Verification - checks data accuracy twice without user intervention
+def auto_verify_data(dataframe, check_number):
+    """Automatically verify data accuracy."""
+    issues = []
+    
+    # Check 1: Validate data types
+    if 'Value' in dataframe.columns:
+        non_numeric = pd.to_numeric(dataframe['Value'], errors='coerce').isna().sum()
+        if non_numeric > 0:
+            issues.append(f"Check {check_number}: {non_numeric} non-numeric values found")
+    
+    # Check 2: Validate date ranges
+    date_col = 'SampleDateTime' if 'SampleDateTime' in dataframe.columns else 'DateTime' if 'DateTime' in dataframe.columns else None
+    if date_col and date_col in dataframe.columns:
+        dates = pd.to_datetime(dataframe[date_col], errors='coerce')
+        future_dates = (dates > datetime.now()).sum()
+        if future_dates > 0:
+            issues.append(f"Check {check_number}: {future_dates} future dates detected")
+    
+    # Check 3: Validate risk levels are within expected range
+    if 'risk_level' in dataframe.columns:
+        invalid_risk = ((dataframe['risk_level'] < 0) | (dataframe['risk_level'] > 3)).sum()
+        if invalid_risk > 0:
+            issues.append(f"Check {check_number}: {invalid_risk} invalid risk levels")
+    
+    # Check 4: Validate required columns exist
+    required_cols = ['SiteID', 'Value']
+    missing_cols = [c for c in required_cols if c not in dataframe.columns]
+    if missing_cols:
+        issues.append(f"Check {check_number}: Missing columns: {missing_cols}")
+    
+    return len(issues) == 0, issues
+
+# Run verification twice automatically
+if not df.empty:
+    verification_pass_1, issues_1 = auto_verify_data(df, 1)
+    verification_pass_2, issues_2 = auto_verify_data(df, 2)
+    
+    # Store verification results in session state (silent - no user interruption)
+    st.session_state['data_verified'] = verification_pass_1 and verification_pass_2
+    st.session_state['verification_issues'] = issues_1 + issues_2
+
 data_type = country_meta.get('data_type', 'simulated')
 data_src = country_meta.get('data_source', 'Simulated')
 if data_type == 'api':
@@ -951,6 +1068,15 @@ elif data_type == 'reference':
 else:
     st.sidebar.markdown(f"**🔵 Source:** World Bank calibrated simulation")
 
+# Show verification status (green checkmark if passed, subtle indicator)
+if st.session_state.get('data_verified', False):
+    st.sidebar.markdown("**✅ Data Verified** (2x auto-check passed)")
+else:
+    issues = st.session_state.get('verification_issues', [])
+    if issues:
+        with st.sidebar.expander("⚠️ Verification Notes", expanded=False):
+            for issue in issues:
+                st.caption(issue)
 
 st.sidebar.divider()
 
@@ -982,11 +1108,12 @@ st.sidebar.divider()
 
 st.sidebar.header("📊 Visualization")
 
-
+# Use session state key to persist chart type selection
 chart_type = st.sidebar.radio(
     "Chart Type",
     ["Heatmap", "Bar Chart", "Line Chart", "Data Table"],
-    horizontal=False
+    horizontal=False,
+    key='chart_type_selector'
 )
 
 # Show indicator selection only when Line Chart or Bar Chart is selected
@@ -998,9 +1125,11 @@ if chart_type in ["Line Chart", "Bar Chart"]:
         data_indicators = df['Indicator'].unique().tolist()
         available_indicators = [i for i in available_indicators if i in data_indicators] or data_indicators[:5]
     
+    # Persist indicator selection in session state
     selected_indicator = st.sidebar.selectbox(
         'Select Indicator', 
         available_indicators,
+        key='indicator_selector',
         help="Choose which water quality indicator to display on the chart"
     )
 else:
@@ -1019,47 +1148,50 @@ risk_color_map = {
     "unknown": "gray"
 }
 
-if st.sidebar.button("🔮 Run Prediction"):
-    with st.spinner("Analyzing water quality..."):
-        site_data = df[df['SiteID'] == site]
-        
-        if not site_data.empty and 'risk_level' in site_data.columns:
-            avg_risk = site_data['risk_level'].mean()
-            
-            month_idx = MONTH_LABELS.index(month) + 1 if month in MONTH_LABELS else 1
-            month_data = site_data[site_data['Month'] == month_idx]
-            if not month_data.empty:
-                monthly_risk = month_data['risk_level'].mean()
-                predicted_risk = (monthly_risk * 0.7 + avg_risk * 0.3)
-            else:
-                predicted_risk = avg_risk
-            
-            status, emoji, color = get_water_quality_status(predicted_risk)
-            
-            st.subheader(f"Water Quality Prediction for {site} in {month}/{selected_year}")
-            
-            st.markdown(f"""
-            <div style='background: linear-gradient(135deg, {color}22, {color}44); 
-                        border-radius: 15px; 
-                        padding: 30px; 
-                        text-align: center;
-                        margin: 10px 0;'>
-                <h1 style='margin:0; font-size: 48px;'>{emoji}</h1>
-                <h2 style='margin:10px 0; color: {color}; font-size: 36px; font-weight: bold;'>{status}</h2>
-                <p style='margin:0; color: #666; font-size: 16px;'>Based on historical data analysis</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Risk Score", f"{predicted_risk:.2f}", delta="Lower is better", delta_color="inverse")
-            with col2:
-                st.metric("Data Points", len(site_data))
-            with col3:
-                safe_pct = (site_data['risk_level'] == 0).sum() / len(site_data) * 100 if len(site_data) > 0 else 0
-                st.metric("Safe Readings", f"{safe_pct:.0f}%")
-        else:
-            st.warning("No data available for prediction. Please select a different basin or upload data.")
+# Auto-run prediction on page load (no button click required)
+st.sidebar.markdown("---")
+
+
+# Run prediction automatically
+site_data = df[df['SiteID'] == site]
+
+if not site_data.empty and 'risk_level' in site_data.columns:
+    avg_risk = site_data['risk_level'].mean()
+    
+    month_idx = MONTH_LABELS.index(month) + 1 if month in MONTH_LABELS else 1
+    month_data = site_data[site_data['Month'] == month_idx]
+    if not month_data.empty:
+        monthly_risk = month_data['risk_level'].mean()
+        predicted_risk = (monthly_risk * 0.7 + avg_risk * 0.3)
+    else:
+        predicted_risk = avg_risk
+    
+    status, emoji, color = get_water_quality_status(predicted_risk)
+    
+    st.subheader(f"🔮 Water Quality Prediction for {site} in {month}/{selected_year}")
+    
+    st.markdown(f"""
+    <div style='background: linear-gradient(135deg, {color}22, {color}44); 
+                border-radius: 15px; 
+                padding: 30px; 
+                text-align: center;
+                margin: 10px 0;'>
+        <h1 style='margin:0; font-size: 48px;'>{emoji}</h1>
+        <h2 style='margin:10px 0; color: {color}; font-size: 36px; font-weight: bold;'>{status}</h2>
+        <p style='margin:0; color: #666; font-size: 16px;'>Based on historical data analysis</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Risk Score", f"{predicted_risk:.2f}", delta="Lower is better", delta_color="inverse")
+    with col2:
+        st.metric("Data Points", len(site_data))
+    with col3:
+        safe_pct = (site_data['risk_level'] == 0).sum() / len(site_data) * 100 if len(site_data) > 0 else 0
+        st.metric("Safe Readings", f"{safe_pct:.0f}%")
+else:
+    st.warning("No data available for prediction. Please select a different basin or upload data.")
 
 st.divider()
 
@@ -1385,8 +1517,127 @@ if show_data_preview:
     
     with tab1:
         st.subheader("Raw Data Preview")
-        st.caption(f"Showing {min(100, len(df))} of {len(df):,} records")
-        st.dataframe(df.head(100), use_container_width=True, height=400)
+        
+        # Search functionality
+        search_col1, search_col2 = st.columns([3, 1])
+        with search_col1:
+            search_term = st.text_input(
+                "🔍 Search Data",
+                placeholder="Type to search across all columns...",
+                key="data_search_input",
+                help="Search for any word or value. Shows matching rows with ALL columns."
+            )
+        with search_col2:
+            search_in_columns = st.checkbox("Filter columns too", value=False, 
+                                           help="If checked, shows only columns that contain the search term. Default: show ALL columns.")
+        
+        # Apply search filter
+        if search_term:
+            search_term_lower = search_term.lower()
+            
+            # Find rows that contain the search term in any column
+            mask = df.apply(lambda row: row.astype(str).str.lower().str.contains(search_term_lower, na=False).any(), axis=1)
+            filtered_df = df[mask].copy()
+            
+            # Optionally filter columns that contain the search term
+            if search_in_columns:
+                matching_cols = []
+                for col in filtered_df.columns:
+                    # Check if column name matches or any value in column matches
+                    if search_term_lower in col.lower():
+                        matching_cols.append(col)
+                    elif filtered_df[col].astype(str).str.lower().str.contains(search_term_lower, na=False).any():
+                        matching_cols.append(col)
+                
+                if matching_cols:
+                    filtered_df = filtered_df[matching_cols]
+                    st.success(f"🔍 Found {len(filtered_df):,} rows in {len(matching_cols)} columns matching '{search_term}'")
+                else:
+                    st.warning(f"No columns contain '{search_term}'")
+                    filtered_df = pd.DataFrame()
+            else:
+                # Show ALL columns with matching rows (default behavior)
+                st.success(f"🔍 Found {len(filtered_df):,} rows matching '{search_term}' (showing all {len(filtered_df.columns)} columns)")
+        else:
+            filtered_df = df.copy()
+            st.caption(f"�📋 Showing all {len(df):,} records - Use search above to filter, select rows to download specific data")
+        
+        if not filtered_df.empty:
+            # Add row index for selection tracking
+            df_with_index = filtered_df.reset_index(drop=True)
+            df_with_index.insert(0, 'Select', False)
+            
+            # Show records with selection capability
+            edited_df = st.data_editor(
+                df_with_index,
+                use_container_width=True,
+                height=500,
+                key="data_editor_preview",
+                column_config={
+                    "Select": st.column_config.CheckboxColumn(
+                        "Select",
+                        help="Select rows to download",
+                        default=False,
+                        width="small"
+                    )
+                },
+                disabled=[col for col in df_with_index.columns if col != 'Select'],
+                hide_index=True
+            )
+            
+            # Get selected rows
+            selected_rows = edited_df[edited_df['Select'] == True].drop(columns=['Select'])
+            
+            # Download section
+            st.markdown("---")
+            col_dl1, col_dl2, col_dl3, col_dl4 = st.columns([1, 1, 1, 1])
+            
+            with col_dl1:
+                # Download ALL records (original unfiltered)
+                all_data_csv = df.to_csv(index=False)
+                st.download_button(
+                    label=f"⬇️ Download All ({len(df):,} rows)",
+                    data=all_data_csv,
+                    file_name=f"water_quality_full_data_{selected_country}_{selected_year}.csv",
+                    mime="text/csv",
+                    key="download_all_records",
+                    help=f"Download all {len(df):,} records as CSV"
+                )
+            
+            with col_dl2:
+                # Download FILTERED results (from search)
+                if search_term and len(filtered_df) > 0:
+                    filtered_csv = filtered_df.to_csv(index=False)
+                    st.download_button(
+                        label=f"⬇️ Download Search Results ({len(filtered_df)} rows)",
+                        data=filtered_csv,
+                        file_name=f"water_quality_search_{search_term}_{selected_country}_{selected_year}.csv",
+                        mime="text/csv",
+                        key="download_search_results",
+                        help=f"Download search results for '{search_term}'"
+                    )
+                else:
+                    st.button("⬇️ Search Results (N/A)", disabled=True, key="download_search_disabled")
+            
+            with col_dl3:
+                # Download SELECTED records only
+                if len(selected_rows) > 0:
+                    selected_csv = selected_rows.to_csv(index=False)
+                    st.download_button(
+                        label=f"⬇️ Download Selected ({len(selected_rows)} rows)",
+                        data=selected_csv,
+                        file_name=f"water_quality_selected_{selected_country}_{selected_year}.csv",
+                        mime="text/csv",
+                        key="download_selected_records",
+                        help=f"Download only the {len(selected_rows)} selected rows"
+                    )
+                else:
+                    st.button("⬇️ Download Selected (0 rows)", disabled=True, key="download_selected_disabled")
+            
+            with col_dl4:
+                st.metric("Selected", f"{len(selected_rows):,}", help="Selected rows")
+        else:
+            st.info("No data matches your search. Try a different search term.")
     
     with tab2:
         st.subheader("Data Statistics")

@@ -1,0 +1,17 @@
+SiteID,Date,Indicator,Value,Units
+Test River A,2025-01-15,pH,7.2,units
+Test River A,2025-01-15,Dissolved Oxygen,6.5,mg/L
+Test River A,2025-01-15,Turbidity,25.3,NTU
+Test River A,2025-01-15,E. coli,150,CFU/100mL
+Test River B,2025-01-15,pH,7.8,units
+Test River B,2025-01-15,Dissolved Oxygen,7.1,mg/L
+Test River B,2025-01-15,Turbidity,18.5,NTU
+Test River B,2025-01-15,E. coli,85,CFU/100mL
+Test River A,2025-02-10,pH,7.0,units
+Test River A,2025-02-10,Dissolved Oxygen,6.2,mg/L
+Test River A,2025-02-10,Turbidity,30.1,NTU
+Test River A,2025-02-10,E. coli,200,CFU/100mL
+Test River B,2025-02-10,pH,7.5,units
+Test River B,2025-02-10,Dissolved Oxygen,6.8,mg/L
+Test River B,2025-02-10,Turbidity,22.0,NTU
+Test River B,2025-02-10,E. coli,120,CFU/100mL
