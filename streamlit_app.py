@@ -1518,126 +1518,77 @@ if show_data_preview:
     with tab1:
         st.subheader("Raw Data Preview")
         
-        # Search functionality
-        search_col1, search_col2 = st.columns([3, 1])
-        with search_col1:
-            search_term = st.text_input(
-                "🔍 Search Data",
-                placeholder="Type to search across all columns...",
-                key="data_search_input",
-                help="Search for any word or value. Shows matching rows with ALL columns."
-            )
-        with search_col2:
-            search_in_columns = st.checkbox("Filter columns too", value=False, 
-                                           help="If checked, shows only columns that contain the search term. Default: show ALL columns.")
+        # Search functionality - always visible
+        search_term = st.text_input(
+            "🔍 Search Data",
+            placeholder="Type to search across all columns...",
+            key="data_search_input_stable",
+            help="Search for any word or value. Shows matching rows."
+        )
         
-        # Apply search filter
-        if search_term:
-            search_term_lower = search_term.lower()
-            
+        # Determine what data to display
+        display_df = df.copy()
+        
+        if search_term and search_term.strip():
+            search_term_lower = search_term.lower().strip()
             # Find rows that contain the search term in any column
-            mask = df.apply(lambda row: row.astype(str).str.lower().str.contains(search_term_lower, na=False).any(), axis=1)
-            filtered_df = df[mask].copy()
-            
-            # Optionally filter columns that contain the search term
-            if search_in_columns:
-                matching_cols = []
-                for col in filtered_df.columns:
-                    # Check if column name matches or any value in column matches
-                    if search_term_lower in col.lower():
-                        matching_cols.append(col)
-                    elif filtered_df[col].astype(str).str.lower().str.contains(search_term_lower, na=False).any():
-                        matching_cols.append(col)
-                
-                if matching_cols:
-                    filtered_df = filtered_df[matching_cols]
-                    st.success(f"🔍 Found {len(filtered_df):,} rows in {len(matching_cols)} columns matching '{search_term}'")
-                else:
-                    st.warning(f"No columns contain '{search_term}'")
-                    filtered_df = pd.DataFrame()
-            else:
-                # Show ALL columns with matching rows (default behavior)
-                st.success(f"🔍 Found {len(filtered_df):,} rows matching '{search_term}' (showing all {len(filtered_df.columns)} columns)")
-        else:
-            filtered_df = df.copy()
-            st.caption(f"�📋 Showing all {len(df):,} records - Use search above to filter, select rows to download specific data")
-        
-        if not filtered_df.empty:
-            # Add row index for selection tracking
-            df_with_index = filtered_df.reset_index(drop=True)
-            df_with_index.insert(0, 'Select', False)
-            
-            # Show records with selection capability
-            edited_df = st.data_editor(
-                df_with_index,
-                use_container_width=True,
-                height=500,
-                key="data_editor_preview",
-                column_config={
-                    "Select": st.column_config.CheckboxColumn(
-                        "Select",
-                        help="Select rows to download",
-                        default=False,
-                        width="small"
-                    )
-                },
-                disabled=[col for col in df_with_index.columns if col != 'Select'],
-                hide_index=True
+            mask = display_df.apply(
+                lambda row: row.astype(str).str.lower().str.contains(search_term_lower, na=False).any(), 
+                axis=1
             )
+            display_df = display_df[mask]
             
-            # Get selected rows
-            selected_rows = edited_df[edited_df['Select'] == True].drop(columns=['Select'])
-            
-            # Download section
-            st.markdown("---")
-            col_dl1, col_dl2, col_dl3, col_dl4 = st.columns([1, 1, 1, 1])
-            
-            with col_dl1:
-                # Download ALL records (original unfiltered)
-                all_data_csv = df.to_csv(index=False)
-                st.download_button(
-                    label=f"⬇️ Download All ({len(df):,} rows)",
-                    data=all_data_csv,
-                    file_name=f"water_quality_full_data_{selected_country}_{selected_year}.csv",
-                    mime="text/csv",
-                    key="download_all_records",
-                    help=f"Download all {len(df):,} records as CSV"
-                )
-            
-            with col_dl2:
-                # Download FILTERED results (from search)
-                if search_term and len(filtered_df) > 0:
-                    filtered_csv = filtered_df.to_csv(index=False)
-                    st.download_button(
-                        label=f"⬇️ Download Search Results ({len(filtered_df)} rows)",
-                        data=filtered_csv,
-                        file_name=f"water_quality_search_{search_term}_{selected_country}_{selected_year}.csv",
-                        mime="text/csv",
-                        key="download_search_results",
-                        help=f"Download search results for '{search_term}'"
-                    )
-                else:
-                    st.button("⬇️ Search Results (N/A)", disabled=True, key="download_search_disabled")
-            
-            with col_dl3:
-                # Download SELECTED records only
-                if len(selected_rows) > 0:
-                    selected_csv = selected_rows.to_csv(index=False)
-                    st.download_button(
-                        label=f"⬇️ Download Selected ({len(selected_rows)} rows)",
-                        data=selected_csv,
-                        file_name=f"water_quality_selected_{selected_country}_{selected_year}.csv",
-                        mime="text/csv",
-                        key="download_selected_records",
-                        help=f"Download only the {len(selected_rows)} selected rows"
-                    )
-                else:
-                    st.button("⬇️ Download Selected (0 rows)", disabled=True, key="download_selected_disabled")
-            
-            with col_dl4:
-                st.metric("Selected", f"{len(selected_rows):,}", help="Selected rows")
+            if len(display_df) > 0:
+                st.success(f"🔍 Found {len(display_df):,} rows matching '{search_term}'")
+            else:
+                st.warning(f"No data matches '{search_term}'. Showing all data instead.")
+                display_df = df.copy()  # Reset to show all data
         else:
-            st.info("No data matches your search. Try a different search term.")
+            st.caption(f"📋 Showing all {len(df):,} records")
+        
+        # Always show the dataframe - never conditionally hide it
+        st.dataframe(
+            display_df,
+            use_container_width=True,
+            height=450,
+            hide_index=True
+        )
+        
+        # Download section - always visible
+        st.markdown("---")
+        col_dl1, col_dl2 = st.columns(2)
+        
+        with col_dl1:
+            # Download what's currently displayed
+            display_csv = display_df.to_csv(index=False)
+            if search_term and search_term.strip() and len(display_df) < len(df):
+                btn_label = f"⬇️ Download Displayed ({len(display_df):,} rows)"
+                file_name = f"water_quality_search_{search_term}_{selected_country}_{selected_year}.csv"
+            else:
+                btn_label = f"⬇️ Download All ({len(display_df):,} rows)"
+                file_name = f"water_quality_full_{selected_country}_{selected_year}.csv"
+            
+            st.download_button(
+                label=btn_label,
+                data=display_csv,
+                file_name=file_name,
+                mime="text/csv",
+                key="download_displayed_data"
+            )
+        
+        with col_dl2:
+            # Always allow downloading full dataset
+            if search_term and len(display_df) < len(df):
+                full_csv = df.to_csv(index=False)
+                st.download_button(
+                    label=f"⬇️ Download Full Dataset ({len(df):,} rows)",
+                    data=full_csv,
+                    file_name=f"water_quality_complete_{selected_country}_{selected_year}.csv",
+                    mime="text/csv",
+                    key="download_full_dataset"
+                )
+            else:
+                st.caption("Use search to filter, then download results")
     
     with tab2:
         st.subheader("Data Statistics")
