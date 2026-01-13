@@ -615,6 +615,306 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Hide Streamlit header toolbar (Deploy button and hamburger menu)
+st.markdown("""
+<style>
+    /* Hide the Streamlit header/toolbar */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    
+    /* Hide the hamburger menu */
+    #MainMenu {
+        visibility: hidden !important;
+    }
+    
+    /* Hide footer */
+    footer {
+        visibility: hidden !important;
+    }
+    
+    /* Hide deploy button */
+    .stDeployButton {
+        display: none !important;
+    }
+    
+    /* Adjust top padding since header is hidden */
+    .block-container {
+        padding-top: 1rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================
+# THEME INITIALIZATION (Must be early for instant theme changes)
+# ============================================
+if 'app_theme' not in st.session_state:
+    st.session_state.app_theme = 'Light Aqua'  # Default to light mode
+
+# Define theme options globally
+THEME_OPTIONS = {
+    'Light Aqua': {
+        'primary': '#0097a7',
+        'secondary': '#e0f7fa',
+        'accent': '#00bcd4',
+        'text': '#212121',
+        'text_secondary': '#555555',
+        'background': '#ffffff',
+        'card_bg': '#f5f5f5',
+        'input_bg': '#ffffff',
+        'input_border': '#cccccc',
+        'sidebar_text': '#212121',
+        'is_dark': False
+    },
+    'Dark Ocean': {
+        'primary': '#0f3460',
+        'secondary': '#16213e',
+        'accent': '#e94560',
+        'text': '#ffffff',
+        'text_secondary': '#b0b0b0',
+        'background': '#1a1a2e',
+        'card_bg': '#16213e',
+        'input_bg': '#1a1a2e',
+        'input_border': '#3a3a5e',
+        'sidebar_text': '#ffffff',
+        'is_dark': True
+    },
+    'Forest Green': {
+        'primary': '#2e7d32',
+        'secondary': '#c8e6c9',
+        'accent': '#4caf50',
+        'text': '#1b5e20',
+        'text_secondary': '#388e3c',
+        'background': '#f1f8e9',
+        'card_bg': '#e8f5e9',
+        'input_bg': '#ffffff',
+        'input_border': '#a5d6a7',
+        'sidebar_text': '#1b5e20',
+        'is_dark': False
+    },
+    'Sunset Orange': {
+        'primary': '#e65100',
+        'secondary': '#fff3e0',
+        'accent': '#ff9800',
+        'text': '#bf360c',
+        'text_secondary': '#e65100',
+        'background': '#fff8e1',
+        'card_bg': '#ffecb3',
+        'input_bg': '#ffffff',
+        'input_border': '#ffcc80',
+        'sidebar_text': '#bf360c',
+        'is_dark': False
+    }
+}
+
+# Get current theme and apply CSS immediately
+current_theme = THEME_OPTIONS[st.session_state.app_theme]
+
+# Apply theme CSS immediately on every render
+st.markdown(f"""
+<style>
+    /* ============================================ */
+    /* COMPREHENSIVE THEME STYLING                  */
+    /* ============================================ */
+    
+    /* Main app background */
+    .stApp {{
+        background: linear-gradient(135deg, {current_theme['background']} 0%, {current_theme['secondary']} 100%);
+        color: {current_theme['text']} !important;
+    }}
+    
+    /* Main content area text */
+    .stApp, .stApp p, .stApp span, .stApp div {{
+        color: {current_theme['text']};
+    }}
+    
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {{
+        background: linear-gradient(180deg, {current_theme['secondary']} 0%, {current_theme['primary']}40 100%);
+    }}
+    
+    [data-testid="stSidebar"], 
+    [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] .stMarkdown {{
+        color: {current_theme['sidebar_text']} !important;
+    }}
+    
+    /* Headers */
+    h1, h2, h3, h4, h5, h6 {{
+        color: {current_theme['accent']} !important;
+    }}
+    
+    /* Paragraph and text */
+    p, span, label, .stMarkdown {{
+        color: {current_theme['text']} !important;
+    }}
+    
+    /* Secondary text (captions, help text) */
+    .stCaption, small, .css-1629p8f {{
+        color: {current_theme['text_secondary']} !important;
+    }}
+    
+    /* Input fields */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stTextArea > div > div > textarea {{
+        background-color: {current_theme['input_bg']} !important;
+        color: {current_theme['text']} !important;
+        border-color: {current_theme['input_border']} !important;
+    }}
+    
+    /* Selectbox */
+    .stSelectbox > div > div {{
+        background-color: {current_theme['input_bg']} !important;
+        color: {current_theme['text']} !important;
+    }}
+    
+    .stSelectbox [data-baseweb="select"] {{
+        background-color: {current_theme['input_bg']} !important;
+    }}
+    
+    .stSelectbox [data-baseweb="select"] > div {{
+        background-color: {current_theme['input_bg']} !important;
+        color: {current_theme['text']} !important;
+        border-color: {current_theme['input_border']} !important;
+    }}
+    
+    /* Radio buttons and checkboxes */
+    .stRadio label, .stCheckbox label {{
+        color: {current_theme['text']} !important;
+    }}
+    
+    /* Buttons */
+    .stButton > button {{
+        background: linear-gradient(90deg, {current_theme['primary']}, {current_theme['accent']}) !important;
+        border: none !important;
+        color: #ffffff !important;
+    }}
+    
+    .stButton > button:hover {{
+        background: linear-gradient(90deg, {current_theme['accent']}, {current_theme['primary']}) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }}
+    
+    /* Metrics */
+    [data-testid="stMetricValue"] {{
+        color: {current_theme['accent']} !important;
+    }}
+    
+    [data-testid="stMetricLabel"] {{
+        color: {current_theme['text']} !important;
+    }}
+    
+    [data-testid="stMetricDelta"] {{
+        color: {current_theme['text_secondary']} !important;
+    }}
+    
+    /* Cards and containers */
+    .stExpander {{
+        background-color: {current_theme['card_bg']} !important;
+        border-color: {current_theme['input_border']} !important;
+    }}
+    
+    .stExpander > div > div > div > div {{
+        color: {current_theme['text']} !important;
+    }}
+    
+    /* Data tables */
+    .stDataFrame, .stTable {{
+        background-color: {current_theme['card_bg']} !important;
+    }}
+    
+    .stDataFrame th, .stTable th {{
+        background-color: {current_theme['primary']} !important;
+        color: #ffffff !important;
+    }}
+    
+    .stDataFrame td, .stTable td {{
+        color: {current_theme['text']} !important;
+        background-color: {current_theme['input_bg']} !important;
+    }}
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {{
+        background-color: {current_theme['card_bg']} !important;
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        color: {current_theme['text']} !important;
+    }}
+    
+    .stTabs [aria-selected="true"] {{
+        color: {current_theme['accent']} !important;
+        border-bottom-color: {current_theme['accent']} !important;
+    }}
+    
+    /* Links */
+    a {{
+        color: {current_theme['accent']} !important;
+    }}
+    
+    /* Dividers */
+    hr {{
+        border-color: {current_theme['input_border']} !important;
+    }}
+    
+    /* Alert/Info boxes */
+    .stAlert {{
+        background-color: {current_theme['card_bg']} !important;
+        color: {current_theme['text']} !important;
+    }}
+    
+    /* Sliders */
+    .stSlider label {{
+        color: {current_theme['text']} !important;
+    }}
+    
+    /* Toggle */
+    .stToggle label {{
+        color: {current_theme['text']} !important;
+    }}
+    
+    /* File uploader */
+    .stFileUploader label {{
+        color: {current_theme['text']} !important;
+    }}
+    
+    .stFileUploader > div {{
+        background-color: {current_theme['card_bg']} !important;
+        border-color: {current_theme['input_border']} !important;
+    }}
+    
+    /* Download button */
+    .stDownloadButton > button {{
+        background: linear-gradient(90deg, {current_theme['primary']}, {current_theme['accent']}) !important;
+        color: #ffffff !important;
+    }}
+    
+    /* Spinner */
+    .stSpinner > div {{
+        border-top-color: {current_theme['accent']} !important;
+    }}
+    
+    /* Progress bar */
+    .stProgress > div > div {{
+        background-color: {current_theme['accent']} !important;
+    }}
+    
+    /* Code blocks */
+    .stCodeBlock {{
+        background-color: {current_theme['card_bg']} !important;
+    }}
+    
+    /* Tooltips */
+    [data-testid="stTooltipIcon"] {{
+        color: {current_theme['text_secondary']} !important;
+    }}
+</style>
+""", unsafe_allow_html=True)
+
 # No global loading overlay - using Streamlit's native approach instead
 
 st.title("🌊 Asian Water Quality Dashboard - LIVE")
@@ -1148,6 +1448,76 @@ risk_color_map = {
     "unknown": "gray"
 }
 
+# ============================================
+# SETTINGS SECTION
+# ============================================
+st.sidebar.divider()
+st.sidebar.header("⚙️ Settings")
+
+# Theme and Color Selection
+with st.sidebar.expander("🎨 Theme & Colors", expanded=False):
+    # Theme selector using global THEME_OPTIONS
+    selected_theme = st.selectbox(
+        'Color Theme',
+        list(THEME_OPTIONS.keys()),
+        index=list(THEME_OPTIONS.keys()).index(st.session_state.app_theme),
+        key='theme_selector',
+        help="Choose a color theme for the dashboard"
+    )
+    
+    # Update session state and rerun when theme changes
+    if selected_theme != st.session_state.app_theme:
+        st.session_state.app_theme = selected_theme
+        st.rerun()
+    
+    # Color preview
+    theme_colors = THEME_OPTIONS[st.session_state.app_theme]
+    st.markdown(f"""
+    <div style='display: flex; gap: 5px; margin-top: 10px;'>
+        <div style='width: 30px; height: 30px; border-radius: 50%; background: {theme_colors["primary"]}; border: 2px solid #999;' title='Primary'></div>
+        <div style='width: 30px; height: 30px; border-radius: 50%; background: {theme_colors["secondary"]}; border: 2px solid #999;' title='Secondary'></div>
+        <div style='width: 30px; height: 30px; border-radius: 50%; background: {theme_colors["accent"]}; border: 2px solid #999;' title='Accent'></div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.caption("Theme changes apply immediately")
+
+# GitHub Repository Link
+with st.sidebar.expander("🔗 Resources", expanded=False):
+    st.markdown("""
+    **📂 GitHub Repository**
+    
+    Access the source code, report issues, or contribute to the project:
+    """)
+    
+    st.markdown("""
+    <a href="https://github.com/ArvindRamakrishnan78907/Water-Quality-Analysis-and-Prediction-System-for-Asian-Regions" target="_blank" style="
+        display: inline-block;
+        padding: 10px 20px;
+        background: linear-gradient(90deg, #24292e, #4a4a4a);
+        color: white !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        margin: 10px 0;
+        transition: all 0.3s ease;
+    ">
+        <span style="margin-right: 8px;">🐙</span> View on GitHub
+    </a>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    ---
+    **📖 Quick Links:**
+    - [📝 Documentation](https://github.com/ArvindRamakrishnan78907/Water-Quality-Analysis-and-Prediction-System-for-Asian-Regions#readme)
+    - [🐛 Report Bug](https://github.com/ArvindRamakrishnan78907/Water-Quality-Analysis-and-Prediction-System-for-Asian-Regions/issues)
+    - [✨ Request Feature](https://github.com/ArvindRamakrishnan78907/Water-Quality-Analysis-and-Prediction-System-for-Asian-Regions/issues/new)
+    """)
+    
+    st.caption("Made with ❤️ for water quality monitoring")
+
+st.sidebar.divider()
+
 # Auto-run prediction on page load (no button click required)
 st.sidebar.markdown("---")
 
@@ -1630,4 +2000,4 @@ if show_data_preview:
             st.caption(f"Latest: {date_col.max()}")
             st.caption(f"Span: {(date_col.max() - date_col.min()).days} days")
 
-# Page loading complete - all content rendered
+
