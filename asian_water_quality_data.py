@@ -1805,17 +1805,7 @@ def fetch_water_quality_data(country: str) -> pd.DataFrame:
                     seed = int(hashlib.md5(seed_string.encode()).hexdigest()[:8], 16)
                     np.random.seed(seed)
                     
-                    # Use World Bank "Water Stress" baseline if available
-                    # Higher stress (>50%) implies lower dilution -> higher pollution concentration
-                    default_mid = (ranges['min'] + ranges['max']) / 2
-                    stress_factor = 1.0
-                    
-                    if 'baseline' in wb_data:
-                        water_stress = wb_data['baseline']
-                        # Normalize: 50% stress = 1.0x (normal), 100% stress = 1.2x (concentrated)
-                        stress_factor = 0.8 + (water_stress / 100.0 * 0.4)
-                    
-                    base_value = default_mid * stress_factor
+                    base_value = wb_data.get(indicator, (ranges['min'] + ranges['max']) / 2)
                     
                     value = calibrate_simulated_value(
                         country, basin, indicator, base_value,
