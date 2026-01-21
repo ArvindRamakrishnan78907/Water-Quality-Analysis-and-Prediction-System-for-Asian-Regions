@@ -90,7 +90,8 @@ def determine_risk_level(row):
     indicator = row['Indicator']
     condition = indicator_thresholds.get(indicator)
     value = pd.to_numeric(row['Value (Agency)'], errors='coerce')
-    if not condition or value is None:
+    # Check for NaN (pd.to_numeric returns NaN for errors, not None)
+    if not condition or pd.isna(value):
         return 0
     
     condition_type = condition.get("type", "above")
@@ -130,7 +131,7 @@ def determine_risk_level(row):
             elif value < safe_lower or value > safe_upper:
                 risk_level = 1
             
-            # Otherwise Risk is 0 (Safe)
+            
     
     return risk_level
 
@@ -139,18 +140,7 @@ def get_risk(num):
     
 @st.cache_resource
 def build_model_aggregated_dataset(df, use_xgboost: bool = False):
-    """
-    Build prediction model with k-fold cross-validation.
     
-    IMPROVED:
-    - K-fold cross-validation (5 folds) for better accuracy assessment
-    - XGBoost option (15-20% faster training)
-    - Early stopping to prevent overfitting
-    
-    Parameters:
-    - df: Training DataFrame
-    - use_xgboost: If True, use XGBoost instead of CatBoost
-    """
     from sklearn.model_selection import StratifiedKFold
     
     df = df.copy()
@@ -869,14 +859,42 @@ st.markdown(f"""
         color: {current_theme['text']} !important;
     }}
     
-    /* File uploader */
+    /* File uploader - Enhanced visibility for all themes */
     .stFileUploader label {{
         color: {current_theme['text']} !important;
+        font-weight: 600 !important;
     }}
     
     .stFileUploader > div {{
-        background-color: {current_theme['card_bg']} !important;
-        border-color: {current_theme['input_border']} !important;
+        background-color: {current_theme['input_bg']} !important;
+        border: 2px dashed {current_theme['accent']} !important;
+        border-radius: 10px !important;
+        transition: all 0.3s ease !important;
+    }}
+    
+    .stFileUploader > div:hover {{
+        background-color: {current_theme['secondary']} !important;
+        border-color: {current_theme['primary']} !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    }}
+    
+    /* File uploader inner elements */
+    .stFileUploader [data-testid="stFileUploaderDropzone"] {{
+        background-color: {current_theme['input_bg']} !important;
+        color: {current_theme['text']} !important;
+    }}
+    
+    .stFileUploader [data-testid="stFileUploaderDropzone"] span,
+    .stFileUploader [data-testid="stFileUploaderDropzone"] p,
+    .stFileUploader [data-testid="stFileUploaderDropzone"] small {{
+        color: {current_theme['text']} !important;
+    }}
+    
+    .stFileUploader button {{
+        background: linear-gradient(90deg, {current_theme['primary']}, {current_theme['accent']}) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 5px !important;
     }}
     
     /* Download button */
@@ -907,12 +925,6 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# No global loading overlay - using Streamlit's native approach instead
-
-# ============================================
-# HERO BANNER WITH ANIMATED STATS
-# ============================================
-# Separate CSS styles
 st.markdown(f"""
 <style>
     .hero-banner {{
@@ -948,17 +960,35 @@ st.markdown(f"""
         display: flex;
         gap: 15px;
         flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: stretch;
     }}
     .stat-card {{
         background: rgba(255, 255, 255, 0.15);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.25);
         border-radius: 15px;
-        padding: 15px 25px;
-        min-width: 140px;
-        flex: 1;
+        padding: 15px 20px;
+        min-width: 120px;
+        max-width: 200px;
+        flex: 1 1 calc(25% - 15px);
         text-align: center;
         transition: all 0.3s ease;
+        box-sizing: border-box;
+    }}
+    
+    /* Responsive stat cards for smaller screens */
+    @media (max-width: 1200px) {{
+        .stat-card {{
+            flex: 1 1 calc(50% - 15px);
+            max-width: none;
+        }}
+    }}
+    
+    @media (max-width: 768px) {{
+        .stat-card {{
+            flex: 1 1 100%;
+        }}
     }}
     .stat-card:hover {{
         transform: translateY(-5px);
@@ -1079,12 +1109,17 @@ st.sidebar.divider()
 
 st.sidebar.header("🌏 Region Selection")
 
-country_index = ASIAN_COUNTRIES.index('India') if 'India' in ASIAN_COUNTRIES else 0
+# Use session state to preserve selected country across reruns
+saved_country = st.session_state.get('selected_country', 'India')
+country_index = ASIAN_COUNTRIES.index(saved_country) if saved_country in ASIAN_COUNTRIES else 0
 
 def on_country_change():
-    """Clear data cache when country changes."""
+    """Clear data cache and refresh when country changes."""
     st.cache_data.clear()
     st.session_state.last_refresh = datetime.now()
+    # Save the new country selection to session state
+    st.session_state.selected_country = st.session_state.country_selector
+    st.rerun()  # Force immediate refresh
 
 selected_country = st.sidebar.selectbox(
     'Country', 
@@ -1094,8 +1129,13 @@ selected_country = st.sidebar.selectbox(
     on_change=on_country_change
 )
 
+# Also update session state if country_selector was directly changed
+if 'country_selector' in st.session_state:
+    st.session_state.selected_country = st.session_state.country_selector
+
 country_meta = fetch_country_metadata(selected_country)
 flag_emoji = country_meta.get('flag', '🌏')
+# Display country info with flag inline
 st.sidebar.markdown(f"### {flag_emoji} {selected_country}")
 st.sidebar.caption(f"📍 Capital: {country_meta.get('capital', 'N/A')}")
 st.sidebar.caption(f"👥 Population: {country_meta.get('population', 0):,}")
@@ -1127,7 +1167,12 @@ def load_api_data(country):
 
 def load_live_data(country, refresh_key):
     """Load live streaming data (bypasses cache for real-time updates)."""
-    return fetch_live_water_data(country)
+    try:
+        return fetch_live_water_data(country)
+    except Exception as e:
+        # Log error and return empty DataFrame or cached fallback
+        # In a real app, we might log this to a file
+        return pd.DataFrame()
 
 def accumulate_live_data(new_data, country):
     """Accumulate new live data readings into session history for accurate time-series."""
@@ -1213,6 +1258,10 @@ else:
                 0%, 100% { opacity: 0.6; }
                 50% { opacity: 1; }
             }
+            @keyframes float {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-15px); }
+            }
         </style>
         <div style='
             display: flex;
@@ -1220,6 +1269,7 @@ else:
             align-items: center;
             justify-content: center;
             padding: 80px 20px;
+            min-height: 500px;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             border-radius: 20px;
             margin: 20px 0;
@@ -1228,11 +1278,11 @@ else:
             <h2 style='color: #e94560; margin: 20px 0 10px 0; font-weight: 600;'>Loading Water Quality Data</h2>
             <p style='color: #a0a0a0; margin: 0; animation: pulse 1.5s ease-in-out infinite;'>Fetching data from monitoring stations...</p>
             <div style='
-                width: 200px;
-                height: 4px;
+                width: 250px;
+                height: 6px;
                 background: #333;
-                border-radius: 2px;
-                margin-top: 25px;
+                border-radius: 3px;
+                margin-top: 30px;
                 overflow: hidden;
             '>
                 <div style='
@@ -1242,6 +1292,12 @@ else:
                     animation: loading 1.5s ease-in-out infinite;
                 '></div>
             </div>
+            <div style='margin-top: 40px; display: flex; gap: 20px;'>
+                <div style='font-size: 30px; animation: float 1.5s ease-in-out infinite; animation-delay: 0s;'>💧</div>
+                <div style='font-size: 30px; animation: float 1.5s ease-in-out infinite; animation-delay: 0.3s;'>🏞️</div>
+                <div style='font-size: 30px; animation: float 1.5s ease-in-out infinite; animation-delay: 0.6s;'>📊</div>
+            </div>
+            <p style='color: #666; margin-top: 30px; font-size: 12px;'>Analyzing water quality indicators across river basins...</p>
         </div>
         """, unsafe_allow_html=True)
         df = load_api_data(selected_country)
@@ -1249,13 +1305,26 @@ else:
 
 
 # Filter data to only include the selected country's data (skip for uploaded data)
+original_df = df.copy()  # Keep original for fallback
 if 'Region' in df.columns and st.session_state.data_source != 'upload':
-    df = df[df['Region'] == selected_country]
+    filtered_df = df[df['Region'] == selected_country]
+    if not filtered_df.empty:
+        df = filtered_df
+    else:
+        st.sidebar.warning(f"⚠️ No data found for {selected_country} region filter. Showing all available data.")
 
 # Also filter to only include valid basins for the selected country (skip for uploaded data)
 country_basins = get_basins_for_country(selected_country)
 if 'SiteID' in df.columns and country_basins and st.session_state.data_source != 'upload':
-    df = df[df['SiteID'].isin(country_basins)]
+    filtered_df = df[df['SiteID'].isin(country_basins)]
+    if not filtered_df.empty:
+        df = filtered_df
+    # If empty after basin filter, keep previous df (don't filter further)
+
+# Final check - if df is empty, restore original
+if df.empty and not original_df.empty:
+    df = original_df
+    st.sidebar.warning("⚠️ Filters resulted in no data. Showing unfiltered data.")
 
 if 'risk_level' not in df.columns:
     df['risk_level'] = df.apply(determine_risk_level, axis=1)
@@ -1499,7 +1568,7 @@ if show_data_preview:
     st.sidebar.download_button(
         label="📥 Download Data (CSV)",
         data=csv_data,
-        file_name=f"water_quality_data_{selected_country}_{selected_year}.csv",
+        file_name=f"water_quality_data_{selected_country}_{datetime.now().year}.csv",
         mime="text/csv",
         help="Download the current filtered data for verification"
     )
@@ -1582,6 +1651,15 @@ with st.sidebar.expander("🎨 Theme & Colors", expanded=False):
     """, unsafe_allow_html=True)
     
     st.caption("Theme changes apply immediately")
+    
+    st.divider()
+    
+    # Dashboard Reset
+    if st.button("🔄 Reset Dashboard", help="Clear all selections and data cache"):
+        st.cache_data.clear()
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
 
 # GitHub Repository Link
 with st.sidebar.expander("🔗 Resources", expanded=False):
@@ -2133,13 +2211,16 @@ if chart_type == "Heatmap":
         st.warning("Insufficient data for heatmap. Try Bar Chart or Line Chart instead.")
 
 elif chart_type == "Bar Chart":
-    create_bar_chart(df, site, selected_indicator)
+    with st.spinner("Creating Bar Chart..."):
+        create_bar_chart(df, site, selected_indicator)
 
 elif chart_type == "Line Chart":
-    create_line_chart(df, site, selected_indicator)
+    with st.spinner("Creating Line Chart..."):
+        create_line_chart(df, site, selected_indicator)
 
 elif chart_type == "Data Table":
-    show_data_table(df, site)
+    with st.spinner("Loading Data Table..."):
+        show_data_table(df, site)
 
 st.divider()
 col1, col2, col3 = st.columns(3)
@@ -2158,8 +2239,29 @@ with col3:
 # Data Verification Panel (shown when toggle is enabled)
 if show_data_preview:
     st.divider()
+    
+    # Prominent banner to show data preview is active
+    st.markdown("""
+    <div style='background: linear-gradient(90deg, #27ae60, #2ecc71); 
+                padding: 15px 20px; 
+                border-radius: 10px; 
+                margin-bottom: 20px;
+                box-shadow: 0 4px 15px rgba(39,174,96,0.3);'>
+        <h3 style='margin: 0; color: white;'>✅ Data Preview Mode Active</h3>
+        <p style='margin: 5px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;'>
+            Scroll down to view, search, and download the raw data
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.header("🔍 Data Verification Panel")
-    st.info("Use this section to verify the data is correct. You can view, filter, and download the raw data.")
+    
+    # Check if DataFrame is empty
+    if df.empty:
+        st.warning("⚠️ No data available for the selected region/filters. Try selecting a different country or basin.")
+        st.stop()
+    
+    st.info(f"Use this section to verify the data. Showing {len(df):,} records for {selected_country}.")
     
     # Data overview tabs
     tab1, tab2, tab3 = st.tabs(["📋 Raw Data", "📊 Statistics", "📝 Data Quality"])
@@ -2179,19 +2281,26 @@ if show_data_preview:
         display_df = df.copy()
         
         if search_term and search_term.strip():
-            search_term_lower = search_term.lower().strip()
-            # Find rows that contain the search term in any column
-            mask = display_df.apply(
-                lambda row: row.astype(str).str.lower().str.contains(search_term_lower, na=False).any(), 
-                axis=1
-            )
-            display_df = display_df[mask]
+            import re
+            search_term_clean = search_term.strip()
+            search_term_escaped = re.escape(search_term_clean.lower())
             
-            if len(display_df) > 0:
-                st.success(f"🔍 Found {len(display_df):,} rows matching '{search_term}'")
-            else:
-                st.warning(f"No data matches '{search_term}'. Showing all data instead.")
-                display_df = df.copy()  # Reset to show all data
+            try:
+                # Find rows that contain the search term in any column
+                mask = display_df.apply(
+                    lambda row: row.astype(str).str.lower().str.contains(search_term_escaped, na=False, regex=False).any(), 
+                    axis=1
+                )
+                filtered_df = display_df[mask]
+                
+                if len(filtered_df) > 0:
+                    display_df = filtered_df
+                    st.success(f"🔍 Found {len(display_df):,} rows matching '{search_term_clean}'")
+                else:
+                    st.warning(f"No data matches '{search_term_clean}'. Showing all data instead.")
+                    # Keep display_df as the full dataset
+            except Exception as e:
+                st.error(f"Search error: {e}. Showing all data.")
         else:
             st.caption(f"📋 Showing all {len(df):,} records")
         
@@ -2212,10 +2321,10 @@ if show_data_preview:
             display_csv = display_df.to_csv(index=False)
             if search_term and search_term.strip() and len(display_df) < len(df):
                 btn_label = f"⬇️ Download Displayed ({len(display_df):,} rows)"
-                file_name = f"water_quality_search_{search_term}_{selected_country}_{selected_year}.csv"
+                file_name = f"water_quality_search_{search_term}_{selected_country}_{datetime.now().year}.csv"
             else:
                 btn_label = f"⬇️ Download All ({len(display_df):,} rows)"
-                file_name = f"water_quality_full_{selected_country}_{selected_year}.csv"
+                file_name = f"water_quality_full_{selected_country}_{datetime.now().year}.csv"
             
             st.download_button(
                 label=btn_label,
@@ -2232,7 +2341,7 @@ if show_data_preview:
                 st.download_button(
                     label=f"⬇️ Download Full Dataset ({len(df):,} rows)",
                     data=full_csv,
-                    file_name=f"water_quality_complete_{selected_country}_{selected_year}.csv",
+                    file_name=f"water_quality_complete_{selected_country}_{datetime.now().year}.csv",
                     mime="text/csv",
                     key="download_full_dataset"
                 )
@@ -2272,12 +2381,14 @@ if show_data_preview:
             st.metric("Total Columns", len(df.columns))
         
         # Date range verification
-        if 'DateTime' in df.columns:
+        date_col_name = 'SampleDateTime' if 'SampleDateTime' in df.columns else ('DateTime' if 'DateTime' in df.columns else None)
+        if date_col_name:
             st.markdown("**Date Range Verification**")
-            date_col = pd.to_datetime(df['DateTime'], errors='coerce')
+            date_col = pd.to_datetime(df[date_col_name], errors='coerce')
             st.caption(f"Earliest: {date_col.min()}")
             st.caption(f"Latest: {date_col.max()}")
-            st.caption(f"Span: {(date_col.max() - date_col.min()).days} days")
+            days_span = (date_col.max() - date_col.min()).days if pd.notna(date_col.max()) and pd.notna(date_col.min()) else 'N/A'
+            st.caption(f"Span: {days_span} days")
 
 # Footer CSS styles
 st.markdown(f"""
