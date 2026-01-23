@@ -2167,41 +2167,79 @@ if show_data_preview:
     with tab1:
         st.subheader("Raw Data Preview")
         
-        # Search functionality - always visible
-        search_term = st.text_input(
-            "🔍 Search Data",
-            placeholder="Type to search across all columns...",
-            key="data_search_input_stable",
-            help="Search for any word or value. Shows matching rows."
-        )
+        # Search functionality with button to prevent constant re-renders
+        search_col1, search_col2 = st.columns([4, 1])
+        with search_col1:
+            search_term = st.text_input(
+                "🔍 Search Data",
+                placeholder="Type to search across all columns...",
+                key="data_search_input_stable",
+                help="Search for any word or value. Press Enter or click Search to filter rows."
+            )
+        with search_col2:
+            st.markdown("<br>", unsafe_allow_html=True)  # Spacing
+            search_button = st.button("🔍 Search", key="search_btn", use_container_width=True)
+        
+        # Store search state in session to persist results
+        if 'last_search_term' not in st.session_state:
+            st.session_state.last_search_term = ""
         
         # Determine what data to display
         display_df = df.copy()
         
-        if search_term and search_term.strip():
-            search_term_lower = search_term.lower().strip()
-            # Find rows that contain the search term in any column
-            mask = display_df.apply(
-                lambda row: row.astype(str).str.lower().str.contains(search_term_lower, na=False).any(), 
-                axis=1
-            )
-            display_df = display_df[mask]
-            
-            if len(display_df) > 0:
-                st.success(f"🔍 Found {len(display_df):,} rows matching '{search_term}'")
-            else:
-                st.warning(f"No data matches '{search_term}'. Showing all data instead.")
-                display_df = df.copy()  # Reset to show all data
+        # Apply search filter (either on button click or if Enter was pressed)
+        active_search = search_term.strip() if search_term else ""
+        
+        if active_search:
+            try:
+                search_term_lower = active_search.lower()
+                # Convert all columns to string for searching - vectorized approach
+                str_df = display_df.astype(str)
+                
+                # Create mask by checking each column (faster than row-by-row apply)
+                mask = pd.Series([False] * len(display_df), index=display_df.index)
+                for col in str_df.columns:
+                    col_mask = str_df[col].str.lower().str.contains(search_term_lower, na=False, regex=False)
+                    mask = mask | col_mask
+                
+                filtered_df = display_df[mask]
+                display_df = filtered_df  # Always show only matching rows
+                
+                if len(display_df) > 0:
+                    st.success(f"🔍 Found {len(display_df):,} rows matching '{active_search}'")
+                else:
+                    st.warning(f"❌ No data matches '{active_search}'")
+                    st.info("💡 Try a different search term or clear the search to see all data.")
+                    
+            except Exception as e:
+                st.error(f"Search error: {e}")
+                display_df = pd.DataFrame()  # Show empty on error
         else:
             st.caption(f"📋 Showing all {len(df):,} records")
         
-        # Always show the dataframe - never conditionally hide it
-        st.dataframe(
-            display_df,
-            use_container_width=True,
-            height=450,
-            hide_index=True
-        )
+        # Show the dataframe (will be empty if no matches)
+        if len(display_df) > 0:
+            st.dataframe(
+                display_df,
+                use_container_width=True,
+                height=450,
+                hide_index=True
+            )
+        else:
+            # Show empty state with column headers
+            st.dataframe(
+                df.head(0),  # Empty dataframe with same columns
+                use_container_width=True,
+                height=100,
+                hide_index=True
+            )
+            st.markdown("""
+            <div style='text-align: center; padding: 40px; background: #f8f9fa; border-radius: 10px; margin: 10px 0;'>
+                <div style='font-size: 48px; margin-bottom: 15px;'>🔍</div>
+                <h3 style='color: #666; margin: 0;'>No matching results</h3>
+                <p style='color: #888; margin-top: 10px;'>Clear the search box to view all data</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Download section - always visible
         st.markdown("---")
